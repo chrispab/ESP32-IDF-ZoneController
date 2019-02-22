@@ -1,0 +1,2 @@
+COMPONENT_SRCDIRS:=cppsrc csrc
+COMPONENT_ADD_INCLUDEDIRS:=cppsrc csrc
