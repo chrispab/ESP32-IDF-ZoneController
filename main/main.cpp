@@ -29,13 +29,13 @@
 #define OLED_DATA_PIN GPIO_NUM_21  //RHS_P_11 SDA
 Display myDisplay(U8G2_R0, /* reset=*/U8X8_PIN_NONE, /* clock=*/OLED_CLOCK_PIN,
                   /* data=*/OLED_DATA_PIN);
+#include "graphics_demo.h"
 //Triangle polygon(3, 4, 5);  //<--- example class
 
 // DHT22 stuff
 #define DHTPIN GPIO_NUM_25 // LHS_P_8 what digital pin we're connected to
 #include "DHT.h"
 DHT DHT22Sensor;
-
 // create object
 #include "sendemail.h"
 
@@ -74,6 +74,8 @@ void setupArd()
 {
     Serial.begin(115200);
     Serial.println("==========running setup==========");
+
+
     /* connect to wifi */
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
@@ -116,6 +118,9 @@ extern "C" int app_main(void)
     // setupArd();
     Serial.begin(115200);
     Serial.println("==========running setup==========");
+DHT22Sensor.setup(GPIO_NUM_25);
+
+
 
     nvs_flash_init();
     system_init();
@@ -129,8 +134,8 @@ extern "C" int app_main(void)
     //(const uint8_t*)
 
     wifi_config_t sta_config;
-    sprintf((char *)sta_config.sta.ssid, "notwork"); //or strcpy also works
-    sprintf((char *)sta_config.sta.password, "a new router can solve many problems");
+    sprintf((char *)sta_config.sta.ssid, ssid); //or strcpy also works
+    sprintf((char *)sta_config.sta.password, password);
     sta_config.sta.bssid_set = false;
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
     ESP_ERROR_CHECK(esp_wifi_start());
@@ -147,11 +152,26 @@ extern "C" int app_main(void)
         char s[11];
 
         sprintf(s, "%d", counter);
-        myDisplay.writeLine(6, s);
-        myDisplay.refresh();
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        // myDisplay.writeLine(6, s);
+        // myDisplay.refresh();
+        doit();
+        
+        vTaskDelay(DHT22Sensor.getMinimumSamplingPeriod() / portTICK_PERIOD_MS);
         Serial.print(".");
         counter++;
+
+        //delay(DHT22Sensor.getMinimumSamplingPeriod());
+
+        float humidity = DHT22Sensor.getHumidity();
+        float temperature = DHT22Sensor.getTemperature();
+
+        Serial.print(DHT22Sensor.getStatusString());
+        Serial.print("\t");
+        Serial.print(humidity, 1);
+        Serial.print("\t\t");
+        Serial.print(temperature, 1);
+        Serial.print("\t\t");
+        Serial.println(DHT22Sensor.toFahrenheit(temperature), 1);
     }
     return 0;
 }
