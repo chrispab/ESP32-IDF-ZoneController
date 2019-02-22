@@ -109,18 +109,17 @@ void setupArd()
     DHT22Sensor.setup(DHTPIN, DHT22Sensor.AM2302);
 }
 
-
 extern "C" int app_main(void)
 {
     initArduino();
     displayInit();
-   // setupArd();
+    // setupArd();
     Serial.begin(115200);
     Serial.println("==========running setup==========");
 
     nvs_flash_init();
     system_init();
-     tcpip_adapter_init();
+    tcpip_adapter_init();
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -137,16 +136,22 @@ extern "C" int app_main(void)
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_ERROR_CHECK(esp_wifi_connect());
 
-
     gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
     int level = 0;
 
+    int counter = 0;
     while (true)
     {
         gpio_set_level(GPIO_NUM_2, level);
         level = !level;
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        char s[11];
+
+        sprintf(s, "%d", counter);
+        myDisplay.writeLine(6, s);
+        myDisplay.refresh();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
         Serial.print(".");
+        counter++;
     }
     return 0;
 }
