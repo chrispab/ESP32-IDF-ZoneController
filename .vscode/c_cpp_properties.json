@@ -8,7 +8,8 @@
             "/home/chris/esp/apps/myapp/components/**",
             "/home/chris/esp/apps/myapp/components/arduino/**",
             "/home/chris/esp/apps/myapp/components/arduino/cores/esp32",
-            "/home/chris/esp/apps/myapp/components/Display/**"
+            "/home/chris/esp/apps/myapp/components/Display/**",
+            "/home/chris/Projects/git/ESP32-IDF-ZoneController/components/u8g2/**"
         ],
         "defines": [],
         "compilerPath": "/usr/bin/gcc",

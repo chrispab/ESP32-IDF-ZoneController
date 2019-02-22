@@ -5,7 +5,7 @@
 #include "driver/gpio.h"
 #include "esp_system.h"
 #include "nvs_flash.h"
-//#include "triangle.h"
+
 #include "Arduino.h"
 
 #include "version.h"
@@ -114,27 +114,28 @@ extern "C" int app_main(void)
 {
     initArduino();
     displayInit();
-    setupArd();
+   // setupArd();
+    Serial.begin(115200);
+    Serial.println("==========running setup==========");
 
+    nvs_flash_init();
+    system_init();
+     tcpip_adapter_init();
+    ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
 
-  //  nvs_flash_init();
-   // system_init();
-     //tcpip_adapter_init();
-    //ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-    // wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    // ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    // ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    // ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    //(const uint8_t*)
 
-    // //(const uint8_t*)
-
-    // wifi_config_t sta_config;
-    // sprintf((char *)sta_config.sta.ssid, "notwork"); //or strcpy also works
-    // sprintf((char *)sta_config.sta.password, "a new router can solve many problems");
-    // sta_config.sta.bssid_set = false;
-    // ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
-    // ESP_ERROR_CHECK(esp_wifi_start());
-    // ESP_ERROR_CHECK(esp_wifi_connect());
+    wifi_config_t sta_config;
+    sprintf((char *)sta_config.sta.ssid, "notwork"); //or strcpy also works
+    sprintf((char *)sta_config.sta.password, "a new router can solve many problems");
+    sta_config.sta.bssid_set = false;
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
+    ESP_ERROR_CHECK(esp_wifi_connect());
 
 
     gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
