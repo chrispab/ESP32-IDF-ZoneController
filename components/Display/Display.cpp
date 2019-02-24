@@ -1,13 +1,6 @@
-// #include <Arduino.h>
-// #include <WiFi.h>
 #include <Display.h>
-// #include <PubSubClient.h>
 #include <U8g2lib.h>
-// #include "DHT.h"
 #include <stdlib.h> // for dtostrf(FLOAT,WIDTH,PRECSISION,BUFFER);
-// #include <RF24.h>
-
-// forward decs
 
 // OLED display stuff
 // U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/U8X8_PIN_NONE,

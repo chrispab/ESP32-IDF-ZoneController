@@ -7,7 +7,11 @@
 
 #include <Arduino.h>
 #include <U8g2lib.h>
+#define SYS_FONT u8g2_font_6x12_tf       // 7 px high
+#define BIG_TEMP_FONT u8g2_font_fub30_tf //30px hieght
 
+#define OLED_CLOCK_PIN GPIO_NUM_22 //RHS_P_14 SCL
+#define OLED_DATA_PIN GPIO_NUM_21  //RHS_P_11 SDA
 
 /**
  */

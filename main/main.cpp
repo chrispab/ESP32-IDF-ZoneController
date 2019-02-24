@@ -16,17 +16,13 @@
 #include <ArduinoOTA.h>
 #include "config.h"
 
-#include "version.h"
 #include "secret.h"
 
 #include "MyOTA.h"
+#include "mylib.h"
 
 #include <Display.h>
-#define SYS_FONT u8g2_font_6x12_tf       // 7 px high
-#define BIG_TEMP_FONT u8g2_font_fub30_tf //30px hieght
 
-#define OLED_CLOCK_PIN GPIO_NUM_22 //RHS_P_14 SCL
-#define OLED_DATA_PIN GPIO_NUM_21  //RHS_P_11 SDA
 Display myDisplay(U8G2_R0, /* reset=*/U8X8_PIN_NONE, /* clock=*/OLED_CLOCK_PIN,
                   /* data=*/OLED_DATA_PIN);
 #include "graphics_demo.h"
@@ -37,13 +33,13 @@ Display myDisplay(U8G2_R0, /* reset=*/U8X8_PIN_NONE, /* clock=*/OLED_CLOCK_PIN,
 #include "DHT.h"
 DHT DHT22Sensor;
 // create object
-#include "sendemail.h"
+// #include "sendemail.h"
 
-SendEmail e("smtp.gmail.com", 465, GMAILTO, GAPPPASSWORD,
-            5000, true);
+// SendEmail e("smtp.gmail.com", 465, GMAILTO, GAPPPASSWORD,
+//             5000, true);
 
-const char *ssid = MYSSID;
-const char *password = MYWIFIPASSWORD;
+// const char *ssid = MYSSID;
+// const char *password = MYWIFIPASSWORD;
 
 /* LED */
 //int led = 2;
@@ -56,61 +52,6 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
     return ESP_OK;
 }
 
-void displayInit(void)
-{
-    myDisplay.begin();
-    myDisplay.setFont(SYS_FONT);
-    myDisplay.wipe();
-    myDisplay.writeLine(1, TITLE_LINE1);
-    myDisplay.writeLine(2, TITLE_LINE2);
-    myDisplay.writeLine(3, TITLE_LINE3);
-    myDisplay.writeLine(4, TITLE_LINE4);
-    myDisplay.writeLine(5, TITLE_LINE5);
-    myDisplay.writeLine(6, TITLE_LINE6);
-    myDisplay.refresh();
-}
-
-void setupArd()
-{
-    Serial.begin(115200);
-    Serial.println("==========running setup==========");
-
-
-    /* connect to wifi */
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
-    /* Wait for connection */
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.print(".");
-    }
-    /* set LED as output */
-    pinMode(fanPin, OUTPUT);
-    pinMode(ventPin, OUTPUT);
-    pinMode(heaterPin, OUTPUT);
-
-    setupOTA();
-
-    // Send Email
-    e.send("<cbattisson@gmail.com>", "<cbattisson@gmail.com>", "ESP32 zone controller start",
-           "ESP32 zone controller  started/restarted");
-
-    myDisplay.begin();
-    myDisplay.setFont(SYS_FONT);
-    myDisplay.wipe();
-    myDisplay.writeLine(1, TITLE_LINE1);
-    myDisplay.writeLine(2, TITLE_LINE2);
-    myDisplay.writeLine(3, TITLE_LINE3);
-    myDisplay.writeLine(4, TITLE_LINE4);
-    myDisplay.writeLine(5, TITLE_LINE5);
-    myDisplay.writeLine(6, TITLE_LINE6);
-    myDisplay.refresh();
-    //delay(500);
-
-    DHT22Sensor.setup(DHTPIN, DHT22Sensor.AM2302);
-}
-
 extern "C" int app_main(void)
 {
     initArduino();
@@ -118,9 +59,7 @@ extern "C" int app_main(void)
     // setupArd();
     Serial.begin(115200);
     Serial.println("==========running setup==========");
-DHT22Sensor.setup(GPIO_NUM_25);
-
-
+    DHT22Sensor.setup(GPIO_NUM_25);
 
     nvs_flash_init();
     system_init();
@@ -155,7 +94,7 @@ DHT22Sensor.setup(GPIO_NUM_25);
         // myDisplay.writeLine(6, s);
         // myDisplay.refresh();
         doit();
-        
+
         vTaskDelay(DHT22Sensor.getMinimumSamplingPeriod() / portTICK_PERIOD_MS);
         Serial.print(".");
         counter++;
