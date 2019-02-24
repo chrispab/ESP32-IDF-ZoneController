@@ -1,10 +1,5 @@
-#include "freertos/FreeRTOS.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "esp_event_loop.h"
+
 #include "driver/gpio.h"
-#include "esp_system.h"
-#include "nvs_flash.h"
 
 #include "Arduino.h"
 
@@ -20,18 +15,15 @@
 
 #include "MyOTA.h"
 #include "mylib.h"
+#include "config.h"
 
 #include <Display.h>
-
 Display myDisplay(U8G2_R0, /* reset=*/U8X8_PIN_NONE, /* clock=*/OLED_CLOCK_PIN,
                   /* data=*/OLED_DATA_PIN);
 #include "graphics_demo.h"
 //Triangle polygon(3, 4, 5);  //<--- example class
 
-// DHT22 stuff
-#define DHTPIN GPIO_NUM_25 // LHS_P_8 what digital pin we're connected to
-#include "DHT.h"
-DHT DHT22Sensor;
+#include "control.h"
 // create object
 // #include "sendemail.h"
 
@@ -40,77 +32,113 @@ DHT DHT22Sensor;
 
 // const char *ssid = MYSSID;
 // const char *password = MYWIFIPASSWORD;
-
+// DHT22 stuff
+// #define DHTPIN GPIO_NUM_25 // LHS_P_8 what digital pin we're connected to
+// #include "DHT.h"
+// DHT DHT22Sensor;
 /* LED */
 //int led = 2;
 int fanPin = 33;
 int ventPin = 2;
 int heaterPin = 26;
 
-esp_err_t event_handler(void *ctx, system_event_t *event)
-{
-    return ESP_OK;
-}
+#define CONTROL 1
+#define TEST 2
+
+#include "Light.h"
+#define ADC1_CH0 36
+Light myLight(ADC1_CH0);
+
+// DHT22 stuff
+#define DHTPIN GPIO_NUM_25 // LHS_P_8 what digital pin we're connected to
+#include <DHT.h>
+DHT DHT22Sensor;
+
+#include "Vent.h"
+Vent myVent;
+
+#include "Fan.h"
+Fan myFan;
+
+#include "Heating.h"
+Heating myHeater;
 
 extern "C" int app_main(void)
 {
-    initArduino();
+    initArduino(); //required by esp-idf
     displayInit();
-    // setupArd();
     Serial.begin(115200);
     Serial.println("==========running setup==========");
-    DHT22Sensor.setup(GPIO_NUM_25);
 
-    nvs_flash_init();
-    system_init();
-    tcpip_adapter_init();
-    ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    initESPSys();
+    /* set LED as output */
+    pinMode(fanPin, OUTPUT);
+    pinMode(ventPin, OUTPUT);
+    pinMode(heaterPin, OUTPUT);
 
-    //(const uint8_t*)
+    setupOTA();
+    DHT22Sensor.setup(DHTPIN, DHT22Sensor.AM2302);
 
-    wifi_config_t sta_config;
-    sprintf((char *)sta_config.sta.ssid, ssid); //or strcpy also works
-    sprintf((char *)sta_config.sta.password, password);
-    sta_config.sta.bssid_set = false;
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
-    ESP_ERROR_CHECK(esp_wifi_connect());
+    long lastRead = 0;
+    bool lightState = false;
+    int analog_value = 0;
+    float temperature = 0;
+    float humidity = 0;
+    long currentMillis = 0;
 
-    gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
-    int level = 0;
-
-    int counter = 0;
+    int mode = CONTROL;
     while (true)
     {
-        gpio_set_level(GPIO_NUM_2, level);
-        level = !level;
-        char s[11];
+        if (mode == CONTROL)
+        {
+            doControl();
+            // ArduinoOTA();
+            /* this function will handle incomming chunk of SW, flash and respond sender */
+            ArduinoOTA.handle();
+            currentMillis = millis();
 
-        sprintf(s, "%d", counter);
-        // myDisplay.writeLine(6, s);
-        // myDisplay.refresh();
-        doit();
+            //*************************************************************************
+            //REad all sensors and states
+            long THnow = millis();
+            if (THnow - lastRead > 5000)
+            {
+                lastRead = THnow;
 
-        vTaskDelay(DHT22Sensor.getMinimumSamplingPeriod() / portTICK_PERIOD_MS);
-        Serial.print(".");
-        counter++;
+                lightState = myLight.getLightState();
+                Serial.println(lightState);
+                analog_value = analogRead(ADC1_CH0);
+                Serial.println(analog_value);
+                //myFan.setOnMillis(analog_value);
 
-        //delay(DHT22Sensor.getMinimumSamplingPeriod());
+                temperature = DHT22Sensor.getTemperature();
+                Serial.println(temperature);
+                humidity = DHT22Sensor.getHumidity();
+                Serial.println(humidity);
+            }
 
-        float humidity = DHT22Sensor.getHumidity();
-        float temperature = DHT22Sensor.getTemperature();
+            //delay(5000);
+            //read sensors
+            //get latest I/O states
+            float targetTemp;
+            myLight.getLightState() ? targetTemp = TSP_LON : targetTemp = TSP_LOFF;
 
-        Serial.print(DHT22Sensor.getStatusString());
-        Serial.print("\t");
-        Serial.print(humidity, 1);
-        Serial.print("\t\t");
-        Serial.print(temperature, 1);
-        Serial.print("\t\t");
-        Serial.println(DHT22Sensor.toFahrenheit(temperature), 1);
+            myVent.control(temperature, targetTemp, lightState, currentMillis);
+            digitalWrite(ventPin, myVent.getState());
+            ArduinoOTA.handle();
+
+            myFan.control(currentMillis);
+            digitalWrite(fanPin, myFan.getState());
+            //speed also
+            ArduinoOTA.handle();
+
+            myHeater.control(temperature, targetTemp, lightState, currentMillis);
+            digitalWrite(heaterPin, myHeater.getState());
+            ArduinoOTA.handle();
+        }
+        if (mode == TEST)
+        {
+            testRoutine();
+        }
     }
     return 0;
 }
