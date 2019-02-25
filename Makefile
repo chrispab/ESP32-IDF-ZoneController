@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := ESPIDFZoneController
+PROJECT_NAME := ZoneController
 
 include $(IDF_PATH)/make/project.mk
 
