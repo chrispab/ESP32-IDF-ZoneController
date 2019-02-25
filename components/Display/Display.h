@@ -5,8 +5,8 @@
 #ifndef Display_h
 #define Display_h
 
-#include <Arduino.h>
-#include <U8g2lib.h>
+//#include <Arduino.h>
+#include "../u8g2/cppsrc/U8g2lib.h"
 #define SYS_FONT u8g2_font_6x12_tf       // 7 px high
 #define BIG_TEMP_FONT u8g2_font_fub30_tf //30px hieght
 

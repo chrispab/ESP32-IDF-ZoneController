@@ -1,5 +1,7 @@
 #include <Display.h>
-#include <U8g2lib.h>
+//#include <U8g2lib.h>
+#include "../u8g2/cppsrc/U8g2lib.h"
+
 #include <stdlib.h> // for dtostrf(FLOAT,WIDTH,PRECSISION,BUFFER);
 
 // OLED display stuff
@@ -12,7 +14,7 @@
 #define CHAR_WIDTH 8
 char displayLine[DISPLAY_LINES][31]; // 6 lines of n chars +terminator for dispaly store
 
-#include "Display.h"
+//#include "Display.h"
 
 Display::Display(const u8g2_cb_t *rotation, uint8_t reset, uint8_t clock,
                  uint8_t data)

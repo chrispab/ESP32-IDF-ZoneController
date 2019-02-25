@@ -1,5 +1,6 @@
 #include <Arduino.h>
-#include <U8g2lib.h>
+//#include <U8g2lib.h>
+#include "../u8g2/cppsrc/U8g2lib.h"
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
