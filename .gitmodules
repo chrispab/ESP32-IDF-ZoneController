@@ -4,6 +4,3 @@
 [submodule "components/arduino-esp32"]
 	path = components/arduino-esp32
 	url = https://github.com/espressif/arduino-esp32.git
-[submodule "arduino-DHT"]
-	path = arduino-DHT
-	url = https://github.com/chrispab/arduino-DHT.git
