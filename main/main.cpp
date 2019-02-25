@@ -1,7 +1,8 @@
+#include "Arduino.h"
 
 #include "driver/gpio.h"
 
-#include "Arduino.h"
+//#include "Arduino.h"
 
 #include "version.h"
 
@@ -17,7 +18,7 @@
 #include "mylib.h"
 #include "config.h"
 
-#include <Display.h>
+#include "Display.h"
 Display myDisplay(U8G2_R0, /* reset=*/U8X8_PIN_NONE, /* clock=*/OLED_CLOCK_PIN,
                   /* data=*/OLED_DATA_PIN);
 #include "graphics_demo.h"

@@ -5,7 +5,7 @@
 #ifndef Display_h
 #define Display_h
 
-//#include <Arduino.h>
+#include "Arduino.h"
 #include "../u8g2/cppsrc/U8g2lib.h"
 #define SYS_FONT u8g2_font_6x12_tf       // 7 px high
 #define BIG_TEMP_FONT u8g2_font_fub30_tf //30px hieght
@@ -17,8 +17,9 @@
  */
 class Display : public U8G2 {
   public:
-    Display(const u8g2_cb_t *rotation, uint8_t reset = U8X8_PIN_NONE,
-            uint8_t clock = U8X8_PIN_NONE, uint8_t data = U8X8_PIN_NONE);
+    //Display(const u8g2_cb_t *rotation, uint8_t reset = U8X8_PIN_NONE, uint8_t clock = U8X8_PIN_NONE, uint8_t data = U8X8_PIN_NONE);
+    //Display(const u8g2_cb_t, uint8_t reset, uint8_t clock, uint8_t data);
+    Display(const u8g2_cb_t *rotation, uint8_t reset, uint8_t clock, uint8_t data);
 
     void writeLine(int lineNumber, const char *lineText);
     void refresh(void);
