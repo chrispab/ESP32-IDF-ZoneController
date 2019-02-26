@@ -6,7 +6,7 @@
 #define Display_h
 
 #include "Arduino.h"
-#include "../u8g2/cppsrc/U8g2lib.h"
+#include "U8g2lib.h"
 #include "u8g2.h"
 
 #define SYS_FONT u8g2_font_6x12_tf       // 7 px high

@@ -1,11 +1,11 @@
+#include <Arduino.h>
 #include "Display.h"
 //#include <U8g2lib.h>
-#include "../u8g2/cppsrc/U8g2lib.h"
+#include "U8g2lib.h"
 #include "u8g2.h"
 
 #include <stdlib.h> // for dtostrf(FLOAT,WIDTH,PRECSISION,BUFFER);
 #include <Wire.h>
-#include <Arduino.h>
 #include <U8g2lib.h>
 // OLED display stuff
 //this wpuld be the constructor to use if creating object directly without 'display' wrapper
