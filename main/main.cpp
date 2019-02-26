@@ -2,8 +2,6 @@
 
 #include "driver/gpio.h"
 
-//#include "Arduino.h"
-
 #include "version.h"
 
 #include <WiFi.h>
@@ -40,8 +38,9 @@ Display myDisplay(U8G2_R0, /* reset=*/U8X8_PIN_NONE, /* clock=*/OLED_CLOCK_PIN,
 /* LED */
 //int led = 2;
 int fanPin = 33;
-int ventPin = 2;
+int ventPin = 27; // 2 is on board led
 int heaterPin = 26;
+#define VENT_SPEED_PIN GPIO_NUM_27
 
 #define CONTROL 1
 #define TEST 2
@@ -63,6 +62,8 @@ Fan myFan;
 
 #include "Heating.h"
 Heating myHeater;
+
+#include "esp_task_wdt.h"
 
 extern "C" int app_main(void)
 {
@@ -90,6 +91,8 @@ extern "C" int app_main(void)
     int mode = CONTROL;
     while (true)
     {
+         //  vTaskDelay(1);
+        //esp_task_wdt_reset();
         if (mode == CONTROL)
         {
             doControl();

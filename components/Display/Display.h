@@ -8,6 +8,8 @@
 #include "Arduino.h"
 #include "U8g2lib.h"
 #include "u8g2.h"
+#include <Wire.h>
+
 
 #define SYS_FONT u8g2_font_6x12_tf       // 7 px high
 #define BIG_TEMP_FONT u8g2_font_fub30_tf //30px hieght
