@@ -7,13 +7,14 @@ void displayInit(void)
 {
     myDisplay.begin();
     myDisplay.setFont(SYS_FONT);
+    myDisplay.setFont(FONT1);
     myDisplay.wipe();
     myDisplay.writeLine(1, TITLE_LINE1);
     myDisplay.writeLine(2, TITLE_LINE2);
     myDisplay.writeLine(3, TITLE_LINE3);
     myDisplay.writeLine(4, TITLE_LINE4);
     myDisplay.writeLine(5, TITLE_LINE5);
-    myDisplay.writeLine(6, TITLE_LINE6);
+    //myDisplay.writeLine(6, TITLE_LINE6);
     myDisplay.refresh();
 }
 

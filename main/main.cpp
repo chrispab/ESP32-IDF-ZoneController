@@ -91,7 +91,7 @@ extern "C" int app_main(void)
     int mode = CONTROL;
     while (true)
     {
-         //  vTaskDelay(1);
+        //  vTaskDelay(1);
         //esp_task_wdt_reset();
         if (mode == CONTROL)
         {
@@ -104,19 +104,24 @@ extern "C" int app_main(void)
             //*************************************************************************
             //REad all sensors and states
             long THnow = millis();
-            if (THnow - lastRead > 5000)
+            if (THnow - lastRead > 4500)
             {
+                vTaskDelay(1);
                 lastRead = THnow;
 
                 lightState = myLight.getLightState();
+                Serial.print("lightState: ");
                 Serial.println(lightState);
                 analog_value = analogRead(ADC1_CH0);
+                Serial.print("lightLevel: ");
                 Serial.println(analog_value);
                 //myFan.setOnMillis(analog_value);
 
                 temperature = DHT22Sensor.getTemperature();
+                Serial.print("Temp: ");
                 Serial.println(temperature);
                 humidity = DHT22Sensor.getHumidity();
+                Serial.print("Humi: ");
                 Serial.println(humidity);
             }
 
