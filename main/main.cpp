@@ -65,6 +65,36 @@ Heating myHeater;
 
 #include "esp_task_wdt.h"
 
+void readAllSensors(void)
+{
+        long lastRead = 0;
+
+        float temperature = 0;
+    float humidity = 0;
+        bool lightState = false;
+    int analog_value = 0;
+    long THnow = millis();
+    if (THnow - lastRead > 4500)
+    {
+        vTaskDelay(1);
+        lastRead = THnow;
+
+        lightState = myLight.getLightState();
+        Serial.print("lightState: ");
+        Serial.println(lightState);
+        analog_value = analogRead(ADC1_CH0);
+        Serial.print("lightLevel: ");
+        Serial.println(analog_value);
+        //myFan.setOnMillis(analog_value);
+
+        temperature = DHT22Sensor.getTemperature();
+        Serial.print("Temp: ");
+        Serial.println(temperature);
+        humidity = DHT22Sensor.getHumidity();
+        Serial.print("Humi: ");
+        Serial.println(humidity);
+    }
+}
 extern "C" int app_main(void)
 {
     initArduino(); //required by esp-idf
@@ -81,11 +111,8 @@ extern "C" int app_main(void)
     setupOTA();
     DHT22Sensor.setup(DHTPIN, DHT22Sensor.AM2302);
 
-    long lastRead = 0;
-    bool lightState = false;
-    int analog_value = 0;
-    float temperature = 0;
-    float humidity = 0;
+
+
     long currentMillis = 0;
 
     int mode = CONTROL;
@@ -95,35 +122,15 @@ extern "C" int app_main(void)
         //esp_task_wdt_reset();
         if (mode == CONTROL)
         {
-            doControl();
+            //doControl();
             // ArduinoOTA();
             /* this function will handle incomming chunk of SW, flash and respond sender */
             ArduinoOTA.handle();
             currentMillis = millis();
 
             //*************************************************************************
+            readAllSensors();
             //REad all sensors and states
-            long THnow = millis();
-            if (THnow - lastRead > 4500)
-            {
-                vTaskDelay(1);
-                lastRead = THnow;
-
-                lightState = myLight.getLightState();
-                Serial.print("lightState: ");
-                Serial.println(lightState);
-                analog_value = analogRead(ADC1_CH0);
-                Serial.print("lightLevel: ");
-                Serial.println(analog_value);
-                //myFan.setOnMillis(analog_value);
-
-                temperature = DHT22Sensor.getTemperature();
-                Serial.print("Temp: ");
-                Serial.println(temperature);
-                humidity = DHT22Sensor.getHumidity();
-                Serial.print("Humi: ");
-                Serial.println(humidity);
-            }
 
             //delay(5000);
             //read sensors

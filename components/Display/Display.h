@@ -17,7 +17,7 @@
 #define XPIX 128
 #define YPIX 64
 #define LINES (YPIX/LINE_HIEGHT)
-#define CHARS_PER_LINE ((XPIX/CHAR_WIDTH)+1)
+#define CHARS_PER_LINE ((XPIX/CHAR_WIDTH)+10)
 
 
 
