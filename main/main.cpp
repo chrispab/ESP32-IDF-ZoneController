@@ -75,7 +75,7 @@ int getAllSensors(float *temperature, float *humidity, bool *lightState, int *li
         vTaskDelay(1);
         lastRead = THnow;
 
-        *lightState = myLight.getLightState();
+        *lightState = myLight.getState();
         *lightSensor = myLight.getLightSensor();
         *temperature = DHT22Sensor.getTemperature();
         *humidity = DHT22Sensor.getHumidity();
@@ -83,7 +83,22 @@ int getAllSensors(float *temperature, float *humidity, bool *lightState, int *li
     }
     return 0;
 }
-
+bool changeOPs(float temperature, float humidity, bool lightState, long currentMillis)
+{
+    float targetTemp;
+    myLight.getState() ? targetTemp = TSP_LON : targetTemp = TSP_LOFF;
+    myVent.control(temperature, targetTemp, lightState, currentMillis);
+    digitalWrite(ventPin, myVent.getState());
+    //ArduinoOTA.handle();
+    myFan.control(currentMillis);
+    digitalWrite(fanPin, myFan.getState());
+    //speed also
+    //ArduinoOTA.handle();
+    myHeater.control(temperature, targetTemp, lightState, currentMillis);
+    digitalWrite(heaterPin, myHeater.getState());
+    //ArduinoOTA.handle();
+    return 1;
+}
 extern "C" int app_main(void)
 {
     //long lastRead = 0;
@@ -137,9 +152,6 @@ extern "C" int app_main(void)
                 Serial.print("Humi: ");
                 Serial.println(humidity); //delay(5000);
                                           //update display
-                // myDisplay.setFont(SYS_FONT);
-                // myDisplay.setFont(FONT1);
-                // myDisplay.wipe();
                 //assemble topline
                 strcpy(line1, "T:");
                 strcat(line1, dtostrf(temperature, 4, 1, readingStr));
@@ -148,34 +160,38 @@ extern "C" int app_main(void)
                 strcat(line1, "  H:");
                 strcat(line1, dtostrf(humidity, 4, 1, readingStr));
                 strcat(line1, "%");
-
-                //        dtostrf(temperature, 4, 1, temperatureString);
-
                 myDisplay.writeLine(1, line1);
-                strcpy(line1, "H  V  F  S  L  VT");
 
+                //myDisplay.writeLine(6, TITLE_LINE6);
+                myDisplay.refresh();
+            }
+            //modify ops if reqd
+            bool OPsChanged = changeOPs(temperature, humidity, lightState, currentMillis);
+            if (OPsChanged)
+            {
+                strcpy(line1, "H  V  F  S  L  VT");
                 myDisplay.writeLine(2, line1);
-                myDisplay.writeLine(3, "");
+
+                strcpy(line1, myHeater.getState() ? "1" : "0");
+                strcat(line1, "  ");
+                strcat(line1, myVent.getState() ? "1" : "0");
+                strcat(line1, "  ");
+                strcat(line1, myFan.getState() ? "1" : "0");
+                strcat(line1, "  ");
+                strcat(line1, myVent.getSpeedState() ? "1" : "0");
+                strcat(line1, "  ");
+                strcat(line1, myLight.getState() ? "1" : "0");
+                strcat(line1, "  ");
+                // strcpy(line1,myLight.getLightState());
+                // strcpy(line1, "  ");
+
+                myDisplay.writeLine(3, line1);
+
                 myDisplay.writeLine(4, "");
                 myDisplay.writeLine(5, "");
                 //myDisplay.writeLine(6, TITLE_LINE6);
                 myDisplay.refresh();
             }
-
-            float targetTemp;
-            myLight.getLightState() ? targetTemp = TSP_LON : targetTemp = TSP_LOFF;
-            myVent.control(temperature, targetTemp, lightState, currentMillis);
-            digitalWrite(ventPin, myVent.getState());
-            ArduinoOTA.handle();
-
-            myFan.control(currentMillis);
-            digitalWrite(fanPin, myFan.getState());
-            //speed also
-            ArduinoOTA.handle();
-
-            myHeater.control(temperature, targetTemp, lightState, currentMillis);
-            digitalWrite(heaterPin, myHeater.getState());
-            ArduinoOTA.handle();
         }
         if (mode == TEST)
         {

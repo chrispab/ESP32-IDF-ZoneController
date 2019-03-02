@@ -12,7 +12,7 @@ class Light
 
   public:
     Light(uint8_t pin);
-    bool getLightState();
+    bool getState();
     int getLightSensor();
 
 };

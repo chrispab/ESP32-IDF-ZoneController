@@ -24,7 +24,7 @@ bool Vent::getState()
 
 bool Vent::getSpeedState()
 {
-    return this->state;
+    return this->speedState;
 }
 void Vent::control(float currentTemp, float targetTemp, bool lightState, long currentMillis)
 {

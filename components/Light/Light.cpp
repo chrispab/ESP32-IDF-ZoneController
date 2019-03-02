@@ -8,7 +8,7 @@ pin(ADC_Pin)
     this->state = false;
 }
 
-bool Light::getLightState()
+bool Light::getState()
 {
     int threshold = 2300;
     //int analog_value = analogRead(pin);
