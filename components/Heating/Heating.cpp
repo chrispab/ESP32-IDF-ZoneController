@@ -10,7 +10,7 @@ Heating::Heating()
     //         self.heater_sp_offset = cfg.getItemValueFromConfig('heater_sp_offset')
     state = false;
     defaultState = false;
-    speedState = false;
+    //speedState = false;
     prevStateChangeMillis = 0;
     onMillis = HEATING_ON_MILLIS;
     offMillis = HEATING_OFF_MILLIS;

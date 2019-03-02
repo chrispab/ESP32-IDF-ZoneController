@@ -28,54 +28,62 @@ bool Vent::getSpeedState()
 }
 void Vent::control(float currentTemp, float targetTemp, bool lightState, long currentMillis)
 {
-    speedState = false;
-    if (lightState)
-    {
-        speedState = true;
-        if (currentTemp > targetTemp + upperOffset)
-        {
-            state = true;
-            prevStateChangeMillis = currentMillis;
-        }
-        else //is below sp
-        {
-            state = false;
-        }
-    }
-    else // light is off
-    {
-        speedState = false;
-        if (currentTemp > targetTemp + lowerOffset)
-        {
-            state = true;
-            prevStateChangeMillis = currentMillis;
-        }
-        else // L off and below lower sp
-        {
-            state = false;
-        }
-    }
+    // speedState = false;
+    // if (lightState)
+    // {
+    //     speedState = true;
+    //     if (currentTemp > targetTemp + upperOffset)
+    //     {
+    //         state = true;
+    //         prevStateChangeMillis = currentMillis;
+    //     }
+    //     else //is below sp
+    //     {
+    //         state = false;
+    //     }
+    // }
+    // else // light is off
+    // {
+    //     speedState = false;
+    //     if (currentTemp > targetTemp + lowerOffset)
+    //     {
+    //         state = true;
+    //         prevStateChangeMillis = currentMillis;
+    //     }
+    //     else // L off and below lower sp
+    //     {
+    //         state = false;
+    //     }
+    // }
 
     //overlay the normal vent background default loop
-    if (!defaultState)//defaultState is the background vent loop
+    if (defaultState) //defaultState is the background vent loop
     {
-        if (currentMillis - prevStateChangeMillis >= offMillis)
+        if (currentMillis - prevStateChangeMillis >= onMillis)
         {
-            defaultState = true;
+            Serial.println("TURNING V OFF");
+            this->defaultState = false;
             prevStateChangeMillis = currentMillis;
+            Serial.println(this->state);
+            Serial.println(this->defaultState);
         }
     }
     else
     {
-        if (currentMillis - prevStateChangeMillis >= onMillis)
+        if (currentMillis - prevStateChangeMillis >= offMillis)
         {
-            defaultState = false;
+            Serial.println("TURNING V ON");
+            this->defaultState = true;
             prevStateChangeMillis = currentMillis;
+            Serial.println(this->state);
+            Serial.println(this->defaultState);
         }
     }
 
     //now OR the states to get final state
-    state = state || defaultState;
+    //    this->state = this->state || this->defaultState;
+    this->state = this->defaultState;
+    //    this->state = this->defaultState;
 
+    //Serial.println(this->state);
 }
-

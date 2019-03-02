@@ -37,10 +37,12 @@ Display myDisplay(U8G2_R0, /* reset=*/U8X8_PIN_NONE, /* clock=*/OLED_CLOCK_PIN,
 // DHT DHT22Sensor;
 /* LED */
 //int led = 2;
-int fanPin = 33;
-int ventPin = 27; // 2 is on board led
-int heaterPin = 26;
-#define VENT_SPEED_PIN GPIO_NUM_27
+//int fanPin = 33;
+#define FAN_PIN GPIO_NUM_33
+//int ventPin = 27; // 2 is on board led
+#define VENT_PIN GPIO_NUM_27
+#define HEATER_PIN GPIO_NUM_26
+#define VENT_SPEED_PIN GPIO_NUM_2
 
 #define CONTROL 1
 #define TEST 2
@@ -87,15 +89,18 @@ bool changeOPs(float temperature, float humidity, bool lightState, long currentM
 {
     float targetTemp;
     myLight.getState() ? targetTemp = TSP_LON : targetTemp = TSP_LOFF;
+    
     myVent.control(temperature, targetTemp, lightState, currentMillis);
-    digitalWrite(ventPin, myVent.getState());
+    digitalWrite(VENT_PIN, myVent.getState());
+    digitalWrite(VENT_SPEED_PIN, myVent.getSpeedState());
+
     //ArduinoOTA.handle();
     myFan.control(currentMillis);
-    digitalWrite(fanPin, myFan.getState());
+    digitalWrite(FAN_PIN, myFan.getState());
     //speed also
     //ArduinoOTA.handle();
     myHeater.control(temperature, targetTemp, lightState, currentMillis);
-    digitalWrite(heaterPin, myHeater.getState());
+    digitalWrite(HEATER_PIN, myHeater.getState());
     //ArduinoOTA.handle();
     return 1;
 }
@@ -116,9 +121,10 @@ extern "C" int app_main(void)
 
     initESPSys();
     /* set LED as output */
-    pinMode(fanPin, OUTPUT);
-    pinMode(ventPin, OUTPUT);
-    pinMode(heaterPin, OUTPUT);
+    pinMode(FAN_PIN, OUTPUT);
+    pinMode(VENT_PIN, OUTPUT);
+    pinMode(VENT_SPEED_PIN, OUTPUT);
+    pinMode(HEATER_PIN, OUTPUT);
 
     setupOTA();
     DHT22Sensor.setup(DHTPIN, DHT22Sensor.AM2302);
@@ -128,8 +134,6 @@ extern "C" int app_main(void)
     int mode = CONTROL;
     while (true)
     {
-        //  vTaskDelay(1);
-        //esp_task_wdt_reset();
         if (mode == CONTROL)
         {
             //doControl();
@@ -138,7 +142,6 @@ extern "C" int app_main(void)
             ArduinoOTA.handle();
             currentMillis = millis();
 
-            //*************************************************************************
             IOChanged = getAllSensors(&temperature, &humidity, &lightState, &lightSensor);
             //REad all sensors and states
             if (IOChanged)
