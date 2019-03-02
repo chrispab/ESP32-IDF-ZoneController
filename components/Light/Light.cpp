@@ -11,11 +11,15 @@ pin(ADC_Pin)
 bool Light::getLightState()
 {
     int threshold = 2300;
-    int analog_value = analogRead(pin);
+    //int analog_value = analogRead(pin);
     this->state = false;
-    if (analog_value > threshold)
+    if (this->getLightSensor() > threshold)
     {
         this->state = true;
     }
     return this->state;
+}
+int Light::getLightSensor()
+{
+    return analogRead(pin);;
 }

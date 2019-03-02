@@ -65,38 +65,35 @@ Heating myHeater;
 
 #include "esp_task_wdt.h"
 
-void readAllSensors(void)
+int getAllSensors(float *temperature, float *humidity, bool *lightState, int *lightSensor)
 {
-        long lastRead = 0;
-
-        float temperature = 0;
-    float humidity = 0;
-        bool lightState = false;
-    int analog_value = 0;
+    static long lastRead = 0;
+    //int analog_value = 0;
     long THnow = millis();
     if (THnow - lastRead > 4500)
     {
         vTaskDelay(1);
         lastRead = THnow;
 
-        lightState = myLight.getLightState();
-        Serial.print("lightState: ");
-        Serial.println(lightState);
-        analog_value = analogRead(ADC1_CH0);
-        Serial.print("lightLevel: ");
-        Serial.println(analog_value);
-        //myFan.setOnMillis(analog_value);
-
-        temperature = DHT22Sensor.getTemperature();
-        Serial.print("Temp: ");
-        Serial.println(temperature);
-        humidity = DHT22Sensor.getHumidity();
-        Serial.print("Humi: ");
-        Serial.println(humidity);
+        *lightState = myLight.getLightState();
+        *lightSensor = myLight.getLightSensor();
+        *temperature = DHT22Sensor.getTemperature();
+        *humidity = DHT22Sensor.getHumidity();
+        return 1;
     }
+    return 0;
 }
+
 extern "C" int app_main(void)
 {
+    //long lastRead = 0;
+    float temperature = 0;
+    float humidity = 0;
+    bool lightState = false;
+    int lightSensor = 0;
+    char line1[30];
+    char readingStr[6];
+
     initArduino(); //required by esp-idf
     displayInit();
     Serial.begin(115200);
@@ -111,10 +108,8 @@ extern "C" int app_main(void)
     setupOTA();
     DHT22Sensor.setup(DHTPIN, DHT22Sensor.AM2302);
 
-
-
     long currentMillis = 0;
-
+    int IOChanged;
     int mode = CONTROL;
     while (true)
     {
@@ -129,15 +124,46 @@ extern "C" int app_main(void)
             currentMillis = millis();
 
             //*************************************************************************
-            readAllSensors();
+            IOChanged = getAllSensors(&temperature, &humidity, &lightState, &lightSensor);
             //REad all sensors and states
+            if (IOChanged)
+            {
+                Serial.print("lightState: ");
+                Serial.println(lightState);
+                Serial.print("lightLevel: ");
+                Serial.println(lightSensor);
+                Serial.print("Temp: ");
+                Serial.println(temperature);
+                Serial.print("Humi: ");
+                Serial.println(humidity); //delay(5000);
+                                          //update display
+                // myDisplay.setFont(SYS_FONT);
+                // myDisplay.setFont(FONT1);
+                // myDisplay.wipe();
+                //assemble topline
+                strcpy(line1, "T:");
+                strcat(line1, dtostrf(temperature, 4, 1, readingStr));
+                strcat(line1, "\xb0");
+                strcat(line1, "C");
+                strcat(line1, "  H:");
+                strcat(line1, dtostrf(humidity, 4, 1, readingStr));
+                strcat(line1, "%");
 
-            //delay(5000);
-            //read sensors
-            //get latest I/O states
+                //        dtostrf(temperature, 4, 1, temperatureString);
+
+                myDisplay.writeLine(1, line1);
+                strcpy(line1, "H  V  F  S  L  VT");
+
+                myDisplay.writeLine(2, line1);
+                myDisplay.writeLine(3, "");
+                myDisplay.writeLine(4, "");
+                myDisplay.writeLine(5, "");
+                //myDisplay.writeLine(6, TITLE_LINE6);
+                myDisplay.refresh();
+            }
+
             float targetTemp;
             myLight.getLightState() ? targetTemp = TSP_LON : targetTemp = TSP_LOFF;
-
             myVent.control(temperature, targetTemp, lightState, currentMillis);
             digitalWrite(ventPin, myVent.getState());
             ArduinoOTA.handle();
