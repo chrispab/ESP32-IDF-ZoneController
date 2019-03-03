@@ -67,29 +67,107 @@ Heating myHeater;
 
 #include "esp_task_wdt.h"
 
+//MQTT
+#include <PubSubClient.h>
+const char *mqtt_server = "192.168.0.200";
+WiFiClient espClient;
+PubSubClient MQTTclient(espClient);
+long lastMsg = 0;
+char msg[50];
+long value = 0;
+
+void pubSubCallback(char *topic, byte *payload, unsigned int length)
+{
+    Serial.print("Message arrived [");
+    Serial.print(topic);
+    Serial.print("] ");
+    for (int i = 0; i < length; i++)
+    {
+        Serial.print((char)payload[i]);
+    }
+    Serial.println();
+
+    // Switch on the LED if an 1 was received as first character
+    if ((char)payload[0] == '1')
+    {
+        //        digitalWrite(BUILTIN_LED, LOW); // Turn the LED on (Note that LOW is the voltage level
+        // but actually the LED is on; this is because
+        // it is active low on the ESP-01)
+        Serial.println("MQTT RX 1");
+    }
+    else
+    {
+        //digitalWrite(BUILTIN_LED, HIGH); // Turn the LED off by making the voltage HIGH
+        Serial.println("MQTT RX 0");
+    }
+}
+
+void reconnect()
+{
+    // Loop until we're reconnected
+    while (!MQTTclient.connected())
+    {
+        Serial.print("Attempting MQTT connection...");
+        // Create a random client ID
+        String clientId = "ESP32Zone2Cl";
+        //clientId += String(random(0xffff), HEX);
+        // Attempt to connect
+        Serial.print("Trying...");
+
+        if (MQTTclient.connect(clientId.c_str()))
+        {
+            Serial.println("connected");
+            // Once connected, publish an announcement...
+            MQTTclient.publish("outTopic", "hello world");
+            // ... and resubscribe
+            MQTTclient.subscribe("inTopic");
+        }
+        else
+        {
+            Serial.print("failed, rc=");
+            Serial.print(MQTTclient.state());
+            Serial.println(" try again in 5 seconds");
+            // Wait 5 seconds before retrying
+            delay(5000);
+        }
+    }
+}
+
 int getAllSensors(float *temperature, float *humidity, bool *lightState, int *lightSensor)
 {
     static long lastRead = 0;
     //int analog_value = 0;
     long THnow = millis();
-    if (THnow - lastRead > 4500)
+    if (THnow - lastRead > SENSOR_READ_PERIOD_MS)
     {
         vTaskDelay(1);
         lastRead = THnow;
-
-        *lightState = myLight.getState();
-        *lightSensor = myLight.getLightSensor();
-        *temperature = DHT22Sensor.getTemperature();
-        *humidity = DHT22Sensor.getHumidity();
-        return 1;
+        //if any changes return 1
+        if (
+            (*lightState != myLight.getState()) ||
+            (*temperature != DHT22Sensor.getTemperature()) ||
+            (*humidity != DHT22Sensor.getHumidity()))
+        {
+            *lightState = myLight.getState();
+            *lightSensor = myLight.getLightSensor();
+            *temperature = DHT22Sensor.getTemperature();
+            *humidity = DHT22Sensor.getHumidity();
+            //else return 0
+            return 1;
+        }
     }
     return 0;
 }
 bool changeOPs(float temperature, float humidity, bool lightState, long currentMillis)
 {
+    static bool lastHeaterState = false;
+    static bool lastVentState = false;
+    static bool lastFanState = false;
+    static bool lastVentSpeedState = false;
+
     float targetTemp;
     myLight.getState() ? targetTemp = TSP_LON : targetTemp = TSP_LOFF;
-    
+
     myVent.control(temperature, targetTemp, lightState, currentMillis);
     digitalWrite(VENT_PIN, myVent.getState());
     digitalWrite(VENT_SPEED_PIN, myVent.getSpeedState());
@@ -102,10 +180,22 @@ bool changeOPs(float temperature, float humidity, bool lightState, long currentM
     myHeater.control(temperature, targetTemp, lightState, currentMillis);
     digitalWrite(HEATER_PIN, myHeater.getState());
     //ArduinoOTA.handle();
-    return 1;
+    //check for ant changes
+    if ((lastHeaterState != myHeater.getState()) || (lastVentState != myVent.getState()) || (lastFanState != myFan.getState()) || (lastVentSpeedState != myVent.getSpeedState()))
+    {
+        lastHeaterState = myHeater.getState();
+        lastVentState = myVent.getState();
+        lastFanState = myFan.getState();
+        lastVentSpeedState = myVent.getSpeedState();
+        return 1;
+    }
+    return 0;
 }
 extern "C" int app_main(void)
 {
+
+    initArduino(); //required by esp-idf
+
     //long lastRead = 0;
     float temperature = 0;
     float humidity = 0;
@@ -114,12 +204,23 @@ extern "C" int app_main(void)
     char line1[30];
     char readingStr[6];
 
-    initArduino(); //required by esp-idf
+    //initESPSys();
+    WiFi.begin(MYSSID, MYWIFIPASSWORD);
+
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+    }
+    //WiFi.mode(WIFI_STA);
     displayInit();
     Serial.begin(115200);
     Serial.println("==========running setup==========");
 
-    initESPSys();
+    //! MQTT
+    IPAddress brokerIP(192, 168, 0, 200);
+    MQTTclient.setServer(brokerIP, 1883);
+    MQTTclient.setCallback(pubSubCallback);
     /* set LED as output */
     pinMode(FAN_PIN, OUTPUT);
     pinMode(VENT_PIN, OUTPUT);
@@ -134,6 +235,24 @@ extern "C" int app_main(void)
     int mode = CONTROL;
     while (true)
     {
+        //! MQTT pubsub bit
+        if (!MQTTclient.connected())
+        {
+            reconnect();
+        }
+        MQTTclient.loop();
+
+        long now = millis();
+        // if (now - lastMsg > 5000)
+        // {
+        //     lastMsg = now;
+        //     ++value;
+        //     snprintf(msg, 50, "hello world #%ld", value);
+        //     Serial.print("Publish message: ");
+        //     Serial.println(msg);
+        //     MQTTclient.publish("outTopic", msg);
+        // }
+
         if (mode == CONTROL)
         {
             //doControl();
@@ -148,13 +267,28 @@ extern "C" int app_main(void)
             {
                 Serial.print("lightState: ");
                 Serial.println(lightState);
+                //snprintf(msg, 50, "Zone2/LightStatus/%ld", value);
+                sprintf(msg, "%d", lightState);
+                MQTTclient.publish("Zone2/LightStatus", msg);
+
                 Serial.print("lightLevel: ");
                 Serial.println(lightSensor);
+                sprintf(msg, "%d", lightSensor);
+                MQTTclient.publish("Zone2/LightSensor", msg);
+
                 Serial.print("Temp: ");
                 Serial.println(temperature);
+                sprintf(msg, "%f", temperature);
+                dtostrf(temperature, 4, 1, msg);
+                MQTTclient.publish("Zone2/TemperatureStatus", msg);
+
                 Serial.print("Humi: ");
                 Serial.println(humidity); //delay(5000);
-                                          //update display
+                sprintf(msg, "%f", humidity);
+                dtostrf(humidity, 4, 1, msg);
+                MQTTclient.publish("Zone2/HumidityStatus", msg);
+
+                //update display
                 //assemble topline
                 strcpy(line1, "T:");
                 strcat(line1, dtostrf(temperature, 4, 1, readingStr));
@@ -187,6 +321,16 @@ extern "C" int app_main(void)
                 strcat(line1, "  ");
                 // strcpy(line1,myLight.getLightState());
                 // strcpy(line1, "  ");
+                sprintf(msg, "%d", lightState);
+                MQTTclient.publish("Zone2/HeaterStatus", myHeater.getState() ? "1" : "0");
+                sprintf(msg, "%d", lightState);
+                MQTTclient.publish("Zone2/VentStatus", myVent.getState() ? "1" : "0");
+                sprintf(msg, "%d", lightState);
+                MQTTclient.publish("Zone2/FanStatus", myFan.getState() ? "1" : "0");
+                sprintf(msg, "%d", lightState);
+                MQTTclient.publish("Zone2/VentSpeedStatusStatus", myVent.getSpeedState() ? "1" : "0");
+                //sprintf(msg, "%d", lightState);
+                //MQTTclient.publish("Zone2/LightStatus", myLight.getState() ? "1" : "0");
 
                 myDisplay.writeLine(3, line1);
 

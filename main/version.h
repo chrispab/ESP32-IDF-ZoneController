@@ -1,4 +1,4 @@
-    #define VERSION "0.2"
+    #define VERSION "0.3"
 
 #define TITLE_LINE1 "ESP32"
 #define TITLE_LINE2 "Zone Controller"

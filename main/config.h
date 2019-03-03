@@ -1,6 +1,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define SENSOR_READ_PERIOD_MS 4000
+
 #define TSP_LON 22.5
 #define TSP_LOFF 21.0
 
