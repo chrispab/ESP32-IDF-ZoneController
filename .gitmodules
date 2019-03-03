@@ -7,3 +7,6 @@
 [submodule "components/arduino-DHT"]
 	path = components/arduino-DHT
 	url = https://github.com/chrispab/arduino-DHT.git
+[submodule "components/pubsubclient"]
+	path = components/pubsubclient
+	url = https://github.com/knolleary/pubsubclient.git
