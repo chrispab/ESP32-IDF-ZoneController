@@ -7,6 +7,7 @@ class Vent
 {
 private:
   bool state;
+  bool coolingState;
   bool defaultState;
   int pin;
   bool speedState;
