@@ -30,33 +30,37 @@ bool Vent::getSpeedState()
 void Vent::control(float currentTemp, float targetTemp, bool lightState, long currentMillis)
 {
     speedState = false;
-    if (lightState)
-    {
-        speedState = true;
-        if (currentTemp > targetTemp + upperOffset)
-        {
-            coolingState = true;
-            prevStateChangeMillis = currentMillis;
-        }
-        else //is below sp
-        {
-            coolingState = false;
-        }
-    }
-    else // light is off
-    {
-        speedState = false;
-        if (currentTemp > targetTemp + lowerOffset)
-        {
-            coolingState = true;
-            prevStateChangeMillis = currentMillis;
-        }
-        else // L off and below lower sp
-        {
-            coolingState = false;
-        }
-    }
 
+    if (VENT_ADAPTIVE)
+    {
+
+        if (lightState)
+        {
+            speedState = true;
+            if (currentTemp > targetTemp + upperOffset)
+            {
+                coolingState = true;
+                prevStateChangeMillis = currentMillis;
+            }
+            else //is below sp
+            {
+                coolingState = false;
+            }
+        }
+        else // light is off
+        {
+            speedState = false;
+            if (currentTemp > targetTemp + lowerOffset)
+            {
+                coolingState = true;
+                prevStateChangeMillis = currentMillis;
+            }
+            else // L off and below lower sp
+            {
+                coolingState = false;
+            }
+        }
+    }
     //overlay the normal vent background default loop
     if (defaultState) //defaultState is the background vent loop
     {

@@ -3,7 +3,7 @@
 
 Fan::Fan()
 {
-    this->state = false;
+    state = false;
     prevStateChangeMillis = 0;
     onMillis = FAN_ON_MILLIS;
     offMillis = FAN_OFF_MILLIS;

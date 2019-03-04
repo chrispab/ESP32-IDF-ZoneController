@@ -1,18 +1,18 @@
 #ifndef __FAN_H
 #define __FAN_H
 
-//#include "config.h"
+#include "config.h"
+#include "IOBase.h"
 
-
-class Fan
+class Fan: public IOBase
 {
-  private:
-    bool state;
+  protected:
+    //bool state;
     int pin;
     long currentMillis;
     long prevStateChangeMillis;
-    long onMillis;
-    long offMillis;
+    //long onMillis;
+    //long offMillis;
 
   public:
     Fan();

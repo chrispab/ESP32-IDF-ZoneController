@@ -242,7 +242,7 @@ extern "C" int app_main(void)
         }
         MQTTclient.loop();
 
-        long now = millis();
+        //long now = millis();
         // if (now - lastMsg > 5000)
         // {
         //     lastMsg = now;
@@ -328,7 +328,7 @@ extern "C" int app_main(void)
                 sprintf(msg, "%d", lightState);
                 MQTTclient.publish("Zone2/FanStatus", myFan.getState() ? "1" : "0");
                 sprintf(msg, "%d", lightState);
-                MQTTclient.publish("Zone2/VentSpeedStatusStatus", myVent.getSpeedState() ? "1" : "0");
+                MQTTclient.publish("Zone2/VentSpeedStatus", myVent.getSpeedState() ? "1" : "0");
                 //sprintf(msg, "%d", lightState);
                 //MQTTclient.publish("Zone2/LightStatus", myLight.getState() ? "1" : "0");
 
