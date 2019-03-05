@@ -2,18 +2,19 @@
 #define __VENT_H
 
 #include <Arduino.h>
+#include "IOBase.h"
 
-class Vent
+class Vent: public IOBase
 {
 private:
-  bool state;
+  //bool state;
   bool coolingState;
-  bool defaultState;
-  int pin;
+  //bool defaultState;
+  //int pin;
   bool speedState;
-  long prevStateChangeMillis;
-  long onMillis;
-  long offMillis;
+  //long prevStateChangeMillis;
+  //long onMillis;
+  //long offMillis;
   float upperOffset;
   float lowerOffset;
 

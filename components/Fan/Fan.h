@@ -8,9 +8,9 @@ class Fan: public IOBase
 {
   protected:
     //bool state;
-    int pin;
-    long currentMillis;
-    long prevStateChangeMillis;
+    // int pin;
+    // long currentMillis;
+    // long prevStateChangeMillis;
     //long onMillis;
     //long offMillis;
 

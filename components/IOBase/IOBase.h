@@ -7,7 +7,8 @@ class IOBase
 {
 protected:
   bool state;
-  bool newData;
+  bool newState;
+  bool defaultState;
 
   int pin;
   long prevStateChangeMillis;
@@ -20,9 +21,9 @@ public:
   IOBase();
   bool getState();
   bool readState();
-  bool hasNewData();
+  bool hasNewState();
   bool getSpeedState();
-  void control(float , float , bool , long );
+  //void control(float , float , bool , long );
 };
 
 #endif

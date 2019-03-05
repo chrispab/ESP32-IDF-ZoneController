@@ -2,18 +2,12 @@
 #define __HEATING_H
 
 //#include <Arduino.h>
+#include "IOBase.h"
 
-class Heating
+class Heating: public IOBase
 {
 private:
-  bool state;
-  bool defaultState;
-  int pin;
-  bool speedState;
-  long prevStateChangeMillis;
-  long onMillis;
-  long offMillis;
-    float spOffset;
+  float spOffset;
 
   float upperOffset;
   float lowerOffset;
