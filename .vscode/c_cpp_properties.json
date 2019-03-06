@@ -3,6 +3,7 @@
         "name": "Linux",
         "includePath": [
             "${workspaceFolder}/**",
+            "${workspaceFolder}/main/**",
             "/home/chris/esp/esp-idf/components/**",
             "/home/chris/esp/esp-idf/components/freertos/include",
             "${workspaceFolder}/components/arduino-DHT",

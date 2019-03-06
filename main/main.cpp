@@ -201,7 +201,7 @@ extern "C" int app_main(void)
     float humidity = 0;
     bool lightState = false;
     int lightSensor = 0;
-    char line1[30];
+    char lineBuf[30];
     char readingStr[6];
 
     //initESPSys();
@@ -290,54 +290,62 @@ extern "C" int app_main(void)
 
                 //update display
                 //assemble topline
-                strcpy(line1, "T:");
-                strcat(line1, dtostrf(temperature, 4, 1, readingStr));
-                strcat(line1, "\xb0");
-                strcat(line1, "C");
-                strcat(line1, "  H:");
-                strcat(line1, dtostrf(humidity, 4, 1, readingStr));
-                strcat(line1, "%");
-                myDisplay.writeLine(1, line1);
+                strcpy(lineBuf, "T:");
+                strcat(lineBuf, dtostrf(temperature, 4, 1, readingStr));
+                strcat(lineBuf, "\xb0");
+                strcat(lineBuf, "C");
+                strcat(lineBuf, "  H:");
+                strcat(lineBuf, dtostrf(humidity, 4, 1, readingStr));
+                strcat(lineBuf, "%");
+                myDisplay.writeLine(1, lineBuf);
 
                 //myDisplay.writeLine(6, TITLE_LINE6);
                 myDisplay.refresh();
             }
-            //modify ops if reqd
+            //modify ops if 1 or more has changed its op
             bool OPsChanged = changeOPs(temperature, humidity, lightState, currentMillis);
             if (OPsChanged)
             {
-                strcpy(line1, "H  V  F  S  L  VT");
-                myDisplay.writeLine(2, line1);
+                strcpy(lineBuf, "H  V  F  S  L  VT");
+                myDisplay.writeLine(2, lineBuf);
 
-                strcpy(line1, myHeater.getState() ? "1" : "0");
-                strcat(line1, "  ");
-                strcat(line1, myVent.getState() ? "1" : "0");
-                strcat(line1, "  ");
-                strcat(line1, myFan.getState() ? "1" : "0");
-                strcat(line1, "  ");
-                strcat(line1, myVent.getSpeedState() ? "1" : "0");
-                strcat(line1, "  ");
-                strcat(line1, myLight.getState() ? "1" : "0");
-                strcat(line1, "  ");
-                // strcpy(line1,myLight.getLightState());
-                // strcpy(line1, "  ");
-                sprintf(msg, "%d", lightState);
-                MQTTclient.publish("Zone2/HeaterStatus", myHeater.getState() ? "1" : "0");
-                sprintf(msg, "%d", lightState);
-                MQTTclient.publish("Zone2/VentStatus", myVent.getState() ? "1" : "0");
-                sprintf(msg, "%d", lightState);
-                MQTTclient.publish("Zone2/FanStatus", myFan.getState() ? "1" : "0");
-                sprintf(msg, "%d", lightState);
-                MQTTclient.publish("Zone2/VentSpeedStatus", myVent.getSpeedState() ? "1" : "0");
-                //sprintf(msg, "%d", lightState);
-                //MQTTclient.publish("Zone2/LightStatus", myLight.getState() ? "1" : "0");
+                strcpy(lineBuf, myHeater.getState() ? "1" : "0");
+                strcat(lineBuf, "  ");
+                strcat(lineBuf, myVent.getState() ? "1" : "0");
+                strcat(lineBuf, "  ");
+                strcat(lineBuf, myFan.getState() ? "1" : "0");
+                strcat(lineBuf, "  ");
+                strcat(lineBuf, myVent.getSpeedState() ? "1" : "0");
+                strcat(lineBuf, "  ");
+                strcat(lineBuf, myLight.getState() ? "1" : "0");
+                strcat(lineBuf, "  ");
 
-                myDisplay.writeLine(3, line1);
-
-                myDisplay.writeLine(4, "");
-                myDisplay.writeLine(5, "");
-                //myDisplay.writeLine(6, TITLE_LINE6);
+                if (myVent.hasNewState())
+                {
+                    MQTTclient.publish("Zone2/VentStatus", myVent.readState() ? "1" : "0");
+                } //sprintf(msg, "%d", lightState);
+                if (myFan.hasNewState())
+                {
+                    MQTTclient.publish("Zone2/FanStatus", myFan.readState() ? "1" : "0");
+                }
+                if (myHeater.hasNewState())
+                {
+                    MQTTclient.publish("Zone2/HeaterStatus", myHeater.readState() ? "1" : "0");
+                }
+                if (myVent.hasNewSpeedState())
+                {
+                    MQTTclient.publish("Zone2/VentSpeedStatus", myVent.readSpeedState() ? "1" : "0");
+                }
+                myDisplay.writeLine(3, lineBuf);
                 myDisplay.refresh();
+            }
+            if ((currentMillis % 1000) == 0)
+            {
+                sprintf(msg, "%u", uint16_t(currentMillis / 1000));
+                myDisplay.writeLine(4, "");
+                myDisplay.writeLine(5, msg);
+                myDisplay.refresh();
+                Serial.println(msg);
             }
         }
         if (mode == TEST)

@@ -1,31 +1,36 @@
 #include "Vent.h"
 #include "config.h"
+#include <Arduino.h>
 
 Vent::Vent()
 {
-    //         self.vent_pulse_active = OFF  # settings.ventPulseActive
-    //         self.vent_pulse_delta = 0  # ventPulseDelta
-    //         self.vent_pulse_on_delta = cfg.getItemValueFromConfig('ventPulseOnDelta')
-    //         self.vent_loff_sp_offset = cfg.getItemValueFromConfig('vent_loff_sp_offset')
-    //         self.vent_lon_sp_offset = cfg.getItemValueFromConfig('vent_lon_sp_offset')
-    //         self.vent_override = OFF  # settings.ventOverride
-    state = false;
     coolingState = false;
-    defaultState = false;
     speedState = false;
-    prevStateChangeMillis = millis();
-    onMillis = VENT_ON_MILLIS;
-    offMillis = VENT_OFF_MILLIS;
+    setOnMillis(VENT_ON_MILLIS);
+    setOffMillis(VENT_OFF_MILLIS);
 }
 
-bool Vent::getState()
+void Vent::setSpeedState(bool pnewSpeedState)
 {
-    return this->coolingState || this->defaultState;
+    if (pnewSpeedState != state)
+    {
+        speedState = pnewSpeedState;
+        newSpeedState = true;
+    }
 }
-
 bool Vent::getSpeedState()
 {
     return this->speedState;
+}
+bool Vent::readSpeedState()
+{
+    //ensures MQTT pub only sent once per state change since last readState
+    newSpeedState = false; //indicate data read and used e.g MQTT pub
+    return speedState;
+}
+bool Vent::hasNewSpeedState()
+{
+    return newSpeedState;
 }
 void Vent::control(float currentTemp, float targetTemp, bool lightState, long currentMillis)
 {
@@ -33,7 +38,6 @@ void Vent::control(float currentTemp, float targetTemp, bool lightState, long cu
 
     if (VENT_ADAPTIVE)
     {
-
         if (lightState)
         {
             speedState = true;
@@ -66,29 +70,23 @@ void Vent::control(float currentTemp, float targetTemp, bool lightState, long cu
     {
         if (currentMillis - prevStateChangeMillis >= onMillis)
         {
-            Serial.println("TURNING V OFF");
+            //Serial.println("TURNING V OFF");
             this->defaultState = false;
             prevStateChangeMillis = currentMillis;
-            Serial.println(this->state);
-            Serial.println(this->defaultState);
+            //Serial.println(this->state);
+            // Serial.println(this->defaultState);
         }
     }
     else
     {
         if (currentMillis - prevStateChangeMillis >= offMillis)
         {
-            Serial.println("TURNING V ON");
+            //Serial.println("TURNING V ON");
             this->defaultState = true;
             prevStateChangeMillis = currentMillis;
-            Serial.println(this->state);
-            Serial.println(this->defaultState);
+            //Serial.println(this->state);
+            //Serial.println(this->defaultState);
         }
     }
-
-    //now OR the states to get final state
-    //    this->state = this->state || this->defaultState;
-    //this->state = this->defaultState;
-    //    this->state = this->defaultState;
-
-    //Serial.println(this->state);
+    setState(this->coolingState || this->defaultState);
 }

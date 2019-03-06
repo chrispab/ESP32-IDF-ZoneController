@@ -15,7 +15,7 @@ private:
 
 public:
   Heating();
-  bool getState();
+  //bool getState();
   //bool getSpeedState();
   void control(float , float , bool , long );
 };

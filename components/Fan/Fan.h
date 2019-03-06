@@ -7,20 +7,10 @@
 class Fan: public IOBase
 {
   protected:
-    //bool state;
-    // int pin;
-    // long currentMillis;
-    // long prevStateChangeMillis;
-    //long onMillis;
-    //long offMillis;
 
   public:
     Fan();
     void control(long millis);
-    bool getState();
-    void setOnMillis(long onMillis);
-    void setOffMillis(long offMillis);
-    
 };
 
 #endif

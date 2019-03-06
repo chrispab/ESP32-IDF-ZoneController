@@ -1,7 +1,7 @@
 #ifndef __IOBASE_H
 #define __IOBASE_H
 
-//#include <Arduino.h>
+#include <Arduino.h>
 
 class IOBase
 {
@@ -9,8 +9,7 @@ protected:
   bool state;
   bool newState;
   bool defaultState;
-
-  int pin;
+  uint8_t pin;
   long prevStateChangeMillis;
   long onMillis;
   long offMillis;
@@ -20,10 +19,11 @@ protected:
 public:
   IOBase();
   bool getState();
+  void setState(bool);
   bool readState();
   bool hasNewState();
-  bool getSpeedState();
-  //void control(float , float , bool , long );
+  void setOnMillis(long onMillis);
+  void setOffMillis(long offMillis);
 };
 
 #endif
