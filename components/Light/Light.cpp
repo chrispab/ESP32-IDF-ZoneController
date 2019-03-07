@@ -1,25 +1,36 @@
 #include "Light.h"
 ////
 
-Light::Light(uint8_t ADC_Pin):
-pin(ADC_Pin)
+Light::Light(uint8_t ADC_Pin) : pin(ADC_Pin)
 {
-    //pin = 
-    this->state = false;
+    state = false;
+    newState = true;
 }
 
-bool Light::getState()
-{
-    int threshold = 2300;
-    //int analog_value = analogRead(pin);
-    this->state = false;
-    if (this->getLightSensor() > threshold)
+// bool Light::getState()
+// {
+
+// }
+
+bool Light::sampleState(){
+    int threshold = 500;
+    //int sensorValue = getLightSensor();
+    bool currentState;
+
+    currentState = (getLightSensor() > threshold);
+
+    if (currentState != state) //new reading value
     {
-        this->state = true;
+        newState = true;
+        state = currentState;
+    
+        Serial.print("NEW sample state lightState: ");
+        Serial.println(state);
     }
-    return this->state;
+    return state;
 }
+
 int Light::getLightSensor()
 {
-    return analogRead(pin);;
+    return analogRead(pin);
 }

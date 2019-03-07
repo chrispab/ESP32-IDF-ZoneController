@@ -143,6 +143,7 @@ int getAllSensors(float *temperature, float *humidity, bool *lightState, int *li
         vTaskDelay(1);
         lastRead = THnow;
         //if any changes return 1
+
         if (
             (*lightState != myLight.getState()) ||
             (*temperature != DHT22Sensor.getTemperature()) ||
@@ -158,6 +159,7 @@ int getAllSensors(float *temperature, float *humidity, bool *lightState, int *li
     }
     return 0;
 }
+
 bool changeOPs(float temperature, float humidity, bool lightState, long currentMillis)
 {
     static bool lastHeaterState = false;
@@ -242,17 +244,6 @@ extern "C" int app_main(void)
         }
         MQTTclient.loop();
 
-        //long now = millis();
-        // if (now - lastMsg > 5000)
-        // {
-        //     lastMsg = now;
-        //     ++value;
-        //     snprintf(msg, 50, "hello world #%ld", value);
-        //     Serial.print("Publish message: ");
-        //     Serial.println(msg);
-        //     MQTTclient.publish("outTopic", msg);
-        // }
-
         if (mode == CONTROL)
         {
             //doControl();
@@ -265,11 +256,19 @@ extern "C" int app_main(void)
             //REad all sensors and states
             if (IOChanged)
             {
-                Serial.print("lightState: ");
-                Serial.println(lightState);
-                //snprintf(msg, 50, "Zone2/LightStatus/%ld", value);
-                sprintf(msg, "%d", lightState);
-                MQTTclient.publish("Zone2/LightStatus", msg);
+                // Serial.print("lightState: ");
+                // Serial.println(lightState);
+                // //snprintf(msg, 50, "Zone2/LightStatus/%ld", value);
+                // sprintf(msg, "%d", lightState);
+                // MQTTclient.publish("Zone2/LightStatus", msg);
+                //myLight.getState(); //initiate a sensor read
+                myLight.sampleState();
+                if (myLight.hasNewState())
+                {
+                    MQTTclient.publish("Zone2/LightStatus", myLight.readState() ? "1" : "0");
+                    Serial.print("TX MQTT lightState: ");
+                    Serial.println((myLight.readState() ? "1" : "0"));
+                }
 
                 Serial.print("lightLevel: ");
                 Serial.println(lightSensor);

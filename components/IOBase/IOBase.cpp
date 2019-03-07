@@ -13,7 +13,7 @@ IOBase::IOBase()
 
 bool IOBase::getState()
 {
-    return this->state;
+    return state;
 }
 void IOBase::setState(bool pnewState)
 {
@@ -31,7 +31,7 @@ bool IOBase::readState()
 {
     //ensures MQTT pub only sent once per state change since last readState
     newState = false; //indicate data read and used e.g MQTT pub
-    return this->state;
+    return state;
 }
 
 void IOBase::setOnMillis(long ponMillis)

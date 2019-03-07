@@ -2,19 +2,20 @@
 #define __LIGHT_H
 
 #include <Arduino.h>
+#include "IOBase.h"
 
-
-class Light
+class Light: public IOBase
 {
   private:
-    bool state;
+    //bool state;
     int pin;
 
   public:
     Light(uint8_t pin);
-    bool getState();
-    int getLightSensor();
+   // bool getState();
+        bool sampleState();
 
+    int getLightSensor();
 };
 
 #endif
