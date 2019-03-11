@@ -4,7 +4,7 @@
 Light::Light(uint8_t ADC_Pin) : pin(ADC_Pin)
 {
     state = false;
-    newState = true;
+    newStateFlag = true;
 }
 
 // bool Light::getState()
@@ -12,7 +12,8 @@ Light::Light(uint8_t ADC_Pin) : pin(ADC_Pin)
 
 // }
 
-bool Light::sampleState(){
+bool Light::sampleState()
+{
     int threshold = 500;
     //int sensorValue = getLightSensor();
     bool currentState;
@@ -21,10 +22,10 @@ bool Light::sampleState(){
 
     if (currentState != state) //new reading value
     {
-        newState = true;
         state = currentState;
-    
-        Serial.print("NEW sample state lightState: ");
+        newStateFlag = true;
+
+        Serial.print("NEW sample lightState: ");
         Serial.println(state);
     }
     return state;

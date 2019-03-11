@@ -53,8 +53,10 @@ Light myLight(ADC1_CH0);
 
 // DHT22 stuff
 #define DHTPIN GPIO_NUM_25 // LHS_P_8 what digital pin we're connected to
-#include <DHT.h>
-DHT DHT22Sensor;
+//#include <DHT.h>
+//DHT DHT22Sensor;
+#include <THSensor.h>
+THSensor myTHSensor;
 
 #include "Vent.h"
 Vent myVent;
@@ -133,44 +135,44 @@ void reconnect()
     }
 }
 
-int getAllSensors(float *temperature, float *humidity, bool *lightState, int *lightSensor)
+bool getAllSensorReadings()
 {
     static long lastRead = 0;
-    //int analog_value = 0;
     long THnow = millis();
+
     if (THnow - lastRead > SENSOR_READ_PERIOD_MS)
     {
         vTaskDelay(1);
         lastRead = THnow;
-        //if any changes return 1
+        //fresh read all sensors
+        myLight.sampleState();       //initiate light level sample aquisition and state update
+        myTHSensor.getTemperature(); // initiate get new T and H readings
 
         if (
-            (*lightState != myLight.getState()) ||
-            (*temperature != DHT22Sensor.getTemperature()) ||
-            (*humidity != DHT22Sensor.getHumidity()))
+            (myLight.hasNewState()) ||
+            (myTHSensor.hasNewTemperature()) // ||
+            //(*humidity != myTHSensor.getHumidity()))
+        )
         {
-            *lightState = myLight.getState();
-            *lightSensor = myLight.getLightSensor();
-            *temperature = DHT22Sensor.getTemperature();
-            *humidity = DHT22Sensor.getHumidity();
-            //else return 0
-            return 1;
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
-bool changeOPs(float temperature, float humidity, bool lightState, long currentMillis)
+bool processOPs()
 {
     static bool lastHeaterState = false;
     static bool lastVentState = false;
     static bool lastFanState = false;
     static bool lastVentSpeedState = false;
 
+    long currentMillis = millis();
     float targetTemp;
+
     myLight.getState() ? targetTemp = TSP_LON : targetTemp = TSP_LOFF;
 
-    myVent.control(temperature, targetTemp, lightState, currentMillis);
+    myVent.control(myTHSensor.getTemperature(), targetTemp, myLight.getState(), currentMillis);
     digitalWrite(VENT_PIN, myVent.getState());
     digitalWrite(VENT_SPEED_PIN, myVent.getSpeedState());
 
@@ -179,30 +181,25 @@ bool changeOPs(float temperature, float humidity, bool lightState, long currentM
     digitalWrite(FAN_PIN, myFan.getState());
     //speed also
     //ArduinoOTA.handle();
-    myHeater.control(temperature, targetTemp, lightState, currentMillis);
+    myHeater.control(myTHSensor.getTemperature(), targetTemp, myLight.getState(), currentMillis);
     digitalWrite(HEATER_PIN, myHeater.getState());
     //ArduinoOTA.handle();
     //check for ant changes
-    if ((lastHeaterState != myHeater.getState()) || (lastVentState != myVent.getState()) || (lastFanState != myFan.getState()) || (lastVentSpeedState != myVent.getSpeedState()))
+    if ((myHeater.hasNewState()) || (myVent.hasNewState()) || (myFan.hasNewState()) || (myVent.hasNewSpeedState()))
     {
-        lastHeaterState = myHeater.getState();
-        lastVentState = myVent.getState();
-        lastFanState = myFan.getState();
-        lastVentSpeedState = myVent.getSpeedState();
         return 1;
     }
     return 0;
 }
+
+
 extern "C" int app_main(void)
 {
-
     initArduino(); //required by esp-idf
 
-    //long lastRead = 0;
     float temperature = 0;
     float humidity = 0;
     bool lightState = false;
-    int lightSensor = 0;
     char lineBuf[30];
     char readingStr[6];
 
@@ -230,7 +227,7 @@ extern "C" int app_main(void)
     pinMode(HEATER_PIN, OUTPUT);
 
     setupOTA();
-    DHT22Sensor.setup(DHTPIN, DHT22Sensor.AM2302);
+    myTHSensor.setup(DHTPIN, myTHSensor.AM2302);
 
     long currentMillis = 0;
     int IOChanged;
@@ -252,49 +249,44 @@ extern "C" int app_main(void)
             ArduinoOTA.handle();
             currentMillis = millis();
 
-            IOChanged = getAllSensors(&temperature, &humidity, &lightState, &lightSensor);
+            IOChanged = getAllSensorReadings();
             //REad all sensors and states
             if (IOChanged)
             {
-                // Serial.print("lightState: ");
-                // Serial.println(lightState);
-                // //snprintf(msg, 50, "Zone2/LightStatus/%ld", value);
-                // sprintf(msg, "%d", lightState);
-                // MQTTclient.publish("Zone2/LightStatus", msg);
-                //myLight.getState(); //initiate a sensor read
-                myLight.sampleState();
                 if (myLight.hasNewState())
                 {
                     MQTTclient.publish("Zone2/LightStatus", myLight.readState() ? "1" : "0");
                     Serial.print("TX MQTT lightState: ");
                     Serial.println((myLight.readState() ? "1" : "0"));
+
+                    sprintf(msg, "%d", myLight.getLightSensor());
+                    MQTTclient.publish("Zone2/LightSensor", msg);
+                    Serial.print("TX MQTT lightLevel: ");
+                    Serial.println(myLight.getLightSensor());
                 }
 
-                Serial.print("lightLevel: ");
-                Serial.println(lightSensor);
-                sprintf(msg, "%d", lightSensor);
-                MQTTclient.publish("Zone2/LightSensor", msg);
+                if (myTHSensor.hasNewTemperature())
+                {
+                    Serial.print("New Temp: ");
+                    Serial.println(myTHSensor.readTemperature());
+                    sprintf(msg, "%f", myTHSensor.getTemperature());
+                    dtostrf(myTHSensor.getTemperature(), 4, 1, msg);
+                    MQTTclient.publish("Zone2/TemperatureStatus", msg);
 
-                Serial.print("Temp: ");
-                Serial.println(temperature);
-                sprintf(msg, "%f", temperature);
-                dtostrf(temperature, 4, 1, msg);
-                MQTTclient.publish("Zone2/TemperatureStatus", msg);
-
-                Serial.print("Humi: ");
-                Serial.println(humidity); //delay(5000);
-                sprintf(msg, "%f", humidity);
-                dtostrf(humidity, 4, 1, msg);
-                MQTTclient.publish("Zone2/HumidityStatus", msg);
-
+                    Serial.print("....Humi: ");
+                    Serial.println(myTHSensor.getHumidity()); //delay(5000);
+                    sprintf(msg, "%f", myTHSensor.getHumidity());
+                    dtostrf(myTHSensor.getHumidity(), 4, 1, msg);
+                    MQTTclient.publish("Zone2/HumidityStatus", msg);
+                }
                 //update display
                 //assemble topline
                 strcpy(lineBuf, "T:");
-                strcat(lineBuf, dtostrf(temperature, 4, 1, readingStr));
+                strcat(lineBuf, dtostrf(myTHSensor.getTemperature(), 4, 1, readingStr));
                 strcat(lineBuf, "\xb0");
                 strcat(lineBuf, "C");
                 strcat(lineBuf, "  H:");
-                strcat(lineBuf, dtostrf(humidity, 4, 1, readingStr));
+                strcat(lineBuf, dtostrf(myTHSensor.getHumidity(), 4, 1, readingStr));
                 strcat(lineBuf, "%");
                 myDisplay.writeLine(1, lineBuf);
 
@@ -302,7 +294,7 @@ extern "C" int app_main(void)
                 myDisplay.refresh();
             }
             //modify ops if 1 or more has changed its op
-            bool OPsChanged = changeOPs(temperature, humidity, lightState, currentMillis);
+            bool OPsChanged = processOPs();
             if (OPsChanged)
             {
                 strcpy(lineBuf, "H  V  F  S  L  VT");

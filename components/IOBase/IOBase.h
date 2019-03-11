@@ -7,7 +7,7 @@ class IOBase
 {
 protected:
   bool state;
-  bool newState;
+  bool newStateFlag;
   bool defaultState;
   uint8_t pin;
   long prevStateChangeMillis;

@@ -4,7 +4,7 @@
 IOBase::IOBase()
 {
     state = false;
-    newState = false;
+    newStateFlag = false;
     defaultState = false;
     prevStateChangeMillis = millis();
     onMillis = 0;
@@ -15,22 +15,22 @@ bool IOBase::getState()
 {
     return state;
 }
-void IOBase::setState(bool pnewState)
+void IOBase::setState(bool pnewStateFlag)
 {
-    if (pnewState != state)
+    if (pnewStateFlag != state)
     {
-        state = pnewState;
-        newState = true;
+        state = pnewStateFlag;
+        newStateFlag = true;
     }
 }
 bool IOBase::hasNewState()
 {
-    return newState;
+    return newStateFlag;
 }
 bool IOBase::readState()
 {
     //ensures MQTT pub only sent once per state change since last readState
-    newState = false; //indicate data read and used e.g MQTT pub
+    newStateFlag = false; //indicate data read and used e.g MQTT pub
     return state;
 }
 

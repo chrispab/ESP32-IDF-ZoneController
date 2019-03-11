@@ -4,18 +4,18 @@
 #include <Arduino.h>
 #include "IOBase.h"
 
-class Light: public IOBase
+class Light : public IOBase
 {
-  private:
-    //bool state;
-    int pin;
+private:
+  //bool state;
+  int pin;
 
-  public:
-    Light(uint8_t pin);
-   // bool getState();
-        bool sampleState();
+public:
+  Light(uint8_t pin);
+  // bool getState();
+  bool sampleState();
 
-    int getLightSensor();
+  int getLightSensor();
 };
 
 #endif
