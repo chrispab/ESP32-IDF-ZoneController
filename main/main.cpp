@@ -137,7 +137,7 @@ void reconnect()
 
 bool getAllSensorReadings()
 {
-    static long lastRead = 0;
+    static long lastRead = 5000;
     long THnow = millis();
 
     if (THnow - lastRead > SENSOR_READ_PERIOD_MS)
@@ -191,7 +191,6 @@ bool processOPs()
     }
     return 0;
 }
-
 
 extern "C" int app_main(void)
 {
@@ -249,38 +248,37 @@ extern "C" int app_main(void)
             ArduinoOTA.handle();
             currentMillis = millis();
 
-            IOChanged = getAllSensorReadings();
+            //IOChanged =
+            getAllSensorReadings();
             //REad all sensors and states
-            if (IOChanged)
+            // if (IOChanged)
+            // {
+            if (myLight.hasNewState())
             {
-                if (myLight.hasNewState())
-                {
-                    MQTTclient.publish("Zone2/LightStatus", myLight.readState() ? "1" : "0");
-                    Serial.print("TX MQTT lightState: ");
-                    Serial.println((myLight.readState() ? "1" : "0"));
+                MQTTclient.publish("Zone2/LightStatus", myLight.readState() ? "1" : "0");
+                Serial.print("TX MQTT lightState: ");
+                Serial.println((myLight.readState() ? "1" : "0"));
 
-                    sprintf(msg, "%d", myLight.getLightSensor());
-                    MQTTclient.publish("Zone2/LightSensor", msg);
-                    Serial.print("TX MQTT lightLevel: ");
-                    Serial.println(myLight.getLightSensor());
-                }
+                sprintf(msg, "%d", myLight.getLightSensor());
+                MQTTclient.publish("Zone2/LightSensor", msg);
+                Serial.print("TX MQTT lightLevel: ");
+                Serial.println(myLight.getLightSensor());
+            }
 
-                if (myTHSensor.hasNewTemperature())
-                {
-                    Serial.print("New Temp: ");
-                    Serial.println(myTHSensor.readTemperature());
-                    sprintf(msg, "%f", myTHSensor.getTemperature());
-                    dtostrf(myTHSensor.getTemperature(), 4, 1, msg);
-                    MQTTclient.publish("Zone2/TemperatureStatus", msg);
+            if (myTHSensor.hasNewTemperature())
+            {
+                Serial.print("New Temp: ");
+                Serial.println(myTHSensor.readTemperature());
+                sprintf(msg, "%f", myTHSensor.getTemperature());
+                dtostrf(myTHSensor.getTemperature(), 4, 1, msg);
+                MQTTclient.publish("Zone2/TemperatureStatus", msg);
 
-                    Serial.print("....Humi: ");
-                    Serial.println(myTHSensor.getHumidity()); //delay(5000);
-                    sprintf(msg, "%f", myTHSensor.getHumidity());
-                    dtostrf(myTHSensor.getHumidity(), 4, 1, msg);
-                    MQTTclient.publish("Zone2/HumidityStatus", msg);
-                }
-                //update display
-                //assemble topline
+                Serial.print("....Humi: ");
+                Serial.println(myTHSensor.getHumidity()); //delay(5000);
+                sprintf(msg, "%f", myTHSensor.getHumidity());
+                dtostrf(myTHSensor.getHumidity(), 4, 1, msg);
+                MQTTclient.publish("Zone2/HumidityStatus", msg);
+
                 strcpy(lineBuf, "T:");
                 strcat(lineBuf, dtostrf(myTHSensor.getTemperature(), 4, 1, readingStr));
                 strcat(lineBuf, "\xb0");
@@ -293,6 +291,12 @@ extern "C" int app_main(void)
                 //myDisplay.writeLine(6, TITLE_LINE6);
                 myDisplay.refresh();
             }
+            //update display
+            //assemble topline
+            // if (myTHSensor.hasNewTemperature())
+            // {
+            // }
+            // }
             //modify ops if 1 or more has changed its op
             bool OPsChanged = processOPs();
             if (OPsChanged)
