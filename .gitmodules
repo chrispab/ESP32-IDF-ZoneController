@@ -10,3 +10,6 @@
 [submodule "components/pubsubclient"]
 	path = components/pubsubclient
 	url = https://github.com/knolleary/pubsubclient.git
+[submodule "components/NTPClient"]
+	path = components/NTPClient
+	url = https://github.com/arduino-libraries/NTPClient.git
