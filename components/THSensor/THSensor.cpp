@@ -16,32 +16,36 @@ float THSensor::getTemperature()
     // Serial.print("get temp temp : ");
     // Serial.println(temperature);
     //delay(1000);
+
+    //check cos gethumidity elsewhere may have updated temp with NAN
     if (isnan(temperature))
     {
         temperature = previousTemperature;
         return temperature;
     }
+
     previousTemperature = temperature;
     //take a new reading
     newTemperature = DHT::getTemperature();
     if (isnan(newTemperature))
     {
         //newTemperature = previousTemperature;
-        //Serial.print("NAN : ");
+        Serial.println("-NAN-");
         return temperature;
     }
     //if its a fresh - diff value from old then flag hasnewstate
     if (newTemperature != previousTemperature)
     {
-        Serial.print("PREv TEMP : ");
-        Serial.println(previousTemperature);
+        // Serial.println("FRESH TEMP!!! : ");
 
-        Serial.print("NEW TEMP : ");
-        Serial.println(newTemperature);
+        // Serial.print("PREv TEMP : ");
+        // Serial.println(previousTemperature);
+
+        // Serial.print("NEW TEMP : ");
+        // Serial.println(newTemperature);
 
         temperature = newTemperature;
         newTemperatureFlag = true;
-        Serial.println("FRESH TEMP!!! : ");
 
         //return newTemperature;
     }

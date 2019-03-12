@@ -78,6 +78,14 @@ long lastMsg = 0;
 char msg[50];
 long value = 0;
 
+//NTP time stuff
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+WiFiUDP ntpUDP;
+// By default 'time.nist.gov' is used with 60 seconds update interval and
+// no offset
+NTPClient timeClient(ntpUDP);
+
 void pubSubCallback(char *topic, byte *payload, unsigned int length)
 {
     Serial.print("Message arrived [");
@@ -228,8 +236,10 @@ extern "C" int app_main(void)
     setupOTA();
     myTHSensor.setup(DHTPIN, myTHSensor.AM2302);
 
+    timeClient.begin();
+
     long currentMillis = 0;
-    int IOChanged;
+    //int IOChanged;
     int mode = CONTROL;
     while (true)
     {
@@ -269,13 +279,13 @@ extern "C" int app_main(void)
             {
                 Serial.print("New Temp: ");
                 Serial.println(myTHSensor.readTemperature());
-                sprintf(msg, "%f", myTHSensor.getTemperature());
+                //sprintf(msg, "%f", myTHSensor.getTemperature());
                 dtostrf(myTHSensor.getTemperature(), 4, 1, msg);
                 MQTTclient.publish("Zone2/TemperatureStatus", msg);
 
-                Serial.print("....Humi: ");
-                Serial.println(myTHSensor.getHumidity()); //delay(5000);
-                sprintf(msg, "%f", myTHSensor.getHumidity());
+                //Serial.print("....Humi: ");
+                //Serial.println(myTHSensor.getHumidity()); //delay(5000);
+                //sprintf(msg, "%f", myTHSensor.getHumidity());
                 dtostrf(myTHSensor.getHumidity(), 4, 1, msg);
                 MQTTclient.publish("Zone2/HumidityStatus", msg);
 
@@ -336,9 +346,16 @@ extern "C" int app_main(void)
             }
             if ((currentMillis % 1000) == 0)
             {
+                timeClient.update();
+
+                //Serial.println(timeClient.getFormattedTime());
                 sprintf(msg, "%u", uint16_t(currentMillis / 1000));
-                myDisplay.writeLine(4, "");
+                //Serial.println(msg);
+
+                myDisplay.writeLine(4, msg);
+                strcpy(msg, timeClient.getFormattedTime().c_str());
                 myDisplay.writeLine(5, msg);
+                //myDisplay.writeLine(5, msg);
                 myDisplay.refresh();
                 Serial.println(msg);
             }

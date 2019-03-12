@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "/home/chris/Projects/git/ESP32_MQTT433MHzBridge"
 		}
 	],
 	"settings": {
