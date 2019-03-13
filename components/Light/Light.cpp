@@ -25,8 +25,8 @@ bool Light::sampleState()
         state = currentState;
         newStateFlag = true;
 
-        Serial.print("NEW sample lightState: ");
-        Serial.println(state);
+        // Serial.print("NEW sample lightState: ");
+        // Serial.println(state);
     }
     return state;
 }

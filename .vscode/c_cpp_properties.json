@@ -11,7 +11,8 @@
             "${workspaceFolder}/components/**",
             "${workspaceFolder}/components/arduino-esp32/**",
             "/home/chris/Projects/git/ESP32-IDF-ZoneController/components/u8g2/cppsrc/**",
-            "/home/chris/Projects/git/ESP32-IDF-ZoneController/components/u8g2/csrc/**"
+            "/home/chris/Projects/git/ESP32-IDF-ZoneController/components/u8g2/csrc/**",
+            "/home/chris/Projects/git/ESP32-IDF-ZoneController/components/mypubsubclient/src/**"
         ],
         "defines": [],
         "cStandard": "c11",

@@ -73,7 +73,11 @@ Heating myHeater;
 #include <PubSubClient.h>
 const char *mqtt_server = "192.168.0.200";
 WiFiClient espClient;
-PubSubClient MQTTclient(espClient);
+//PubSubClient MQTTclient(espClient);
+
+#include "MyPubSubClient.h"
+MyPubSubClient MQTTclient(espClient);
+
 long lastMsg = 0;
 char msg[50];
 long value = 0;
@@ -145,7 +149,7 @@ void reconnect()
 
 bool getAllSensorReadings()
 {
-    static long lastRead = 5000;
+    static long lastRead = -5000;
     long THnow = millis();
 
     if (THnow - lastRead > SENSOR_READ_PERIOD_MS)
@@ -210,6 +214,8 @@ extern "C" int app_main(void)
     char lineBuf[30];
     char readingStr[6];
 
+    int newSecs=1;
+    int oldSecs=0;
     //initESPSys();
     WiFi.begin(MYSSID, MYWIFIPASSWORD);
 
@@ -239,7 +245,7 @@ extern "C" int app_main(void)
     timeClient.begin();
 
     long currentMillis = 0;
-    //int IOChanged;
+    int newSensorReading;
     int mode = CONTROL;
     while (true)
     {
@@ -258,29 +264,28 @@ extern "C" int app_main(void)
             ArduinoOTA.handle();
             currentMillis = millis();
 
-            //IOChanged =
-            getAllSensorReadings();
+            newSensorReading = getAllSensorReadings();
             //REad all sensors and states
             // if (IOChanged)
             // {
             if (myLight.hasNewState())
             {
                 MQTTclient.publish("Zone2/LightStatus", myLight.readState() ? "1" : "0");
-                Serial.print("TX MQTT lightState: ");
-                Serial.println((myLight.readState() ? "1" : "0"));
+                // Serial.print("TX MQTT lightState: ");
+                // Serial.println((myLight.readState() ? "1" : "0"));
 
                 sprintf(msg, "%d", myLight.getLightSensor());
                 MQTTclient.publish("Zone2/LightSensor", msg);
-                Serial.print("TX MQTT lightLevel: ");
-                Serial.println(myLight.getLightSensor());
+                // Serial.print("TX MQTT lightLevel: ");
+                // Serial.println(myLight.getLightSensor());
             }
 
             if (myTHSensor.hasNewTemperature())
             {
-                Serial.print("New Temp: ");
-                Serial.println(myTHSensor.readTemperature());
+                // Serial.print("New Temp: ");
+                // Serial.println(myTHSensor.readTemperature());
                 //sprintf(msg, "%f", myTHSensor.getTemperature());
-                dtostrf(myTHSensor.getTemperature(), 4, 1, msg);
+                dtostrf(myTHSensor.readTemperature(), 4, 1, msg);
                 MQTTclient.publish("Zone2/TemperatureStatus", msg);
 
                 //Serial.print("....Humi: ");
@@ -288,7 +293,9 @@ extern "C" int app_main(void)
                 //sprintf(msg, "%f", myTHSensor.getHumidity());
                 dtostrf(myTHSensor.getHumidity(), 4, 1, msg);
                 MQTTclient.publish("Zone2/HumidityStatus", msg);
-
+            }
+            if (true)
+            {
                 strcpy(lineBuf, "T:");
                 strcat(lineBuf, dtostrf(myTHSensor.getTemperature(), 4, 1, readingStr));
                 strcat(lineBuf, "\xb0");
@@ -300,17 +307,14 @@ extern "C" int app_main(void)
 
                 //myDisplay.writeLine(6, TITLE_LINE6);
                 myDisplay.refresh();
+                //SnewSensorReading=false;
             }
-            //update display
-            //assemble topline
-            // if (myTHSensor.hasNewTemperature())
-            // {
-            // }
-            // }
+  
             //modify ops if 1 or more has changed its op
             bool OPsChanged = processOPs();
-            if (OPsChanged)
+            if (OPsChanged || newSensorReading)
             {
+                newSensorReading = false;
                 strcpy(lineBuf, "H  V  F  S  L  VT");
                 myDisplay.writeLine(2, lineBuf);
 
@@ -344,8 +348,13 @@ extern "C" int app_main(void)
                 myDisplay.writeLine(3, lineBuf);
                 myDisplay.refresh();
             }
-            if ((currentMillis % 1000) == 0)
+
+            //update display clock
+
+            newSecs = timeClient.getSeconds();
+            if (newSecs != oldSecs)
             {
+                oldSecs = newSecs;
                 timeClient.update();
 
                 //Serial.println(timeClient.getFormattedTime());
