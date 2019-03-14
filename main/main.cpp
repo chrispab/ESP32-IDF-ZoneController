@@ -122,7 +122,7 @@ void reconnect()
     while (!MQTTclient.connected())
     {
         Serial.print("Attempting MQTT connection...");
-        // Create a random client ID
+        // Create a random MQTTclient ID
         String clientId = "ESP32Zone2Cl";
         //clientId += String(random(0xffff), HEX);
         // Attempt to connect
@@ -203,7 +203,17 @@ bool processOPs()
     }
     return 0;
 }
-
+boolean MQTTreconnect()
+{
+    if (MQTTclient.connect("arduinoClient"))
+    {
+        // Once connected, publish an announcement...
+        MQTTclient.publish("outTopic", "hello world");
+        // ... and resubscribe
+        MQTTclient.subscribe("inTopic");
+    }
+    return MQTTclient.connected();
+}
 extern "C" int app_main(void)
 {
     initArduino(); //required by esp-idf
@@ -214,8 +224,8 @@ extern "C" int app_main(void)
     char lineBuf[30];
     char readingStr[6];
 
-    int newSecs=1;
-    int oldSecs=0;
+    int newSecs = 1;
+    int oldSecs = 0;
     //initESPSys();
     WiFi.begin(MYSSID, MYWIFIPASSWORD);
 
@@ -243,18 +253,39 @@ extern "C" int app_main(void)
     myTHSensor.setup(DHTPIN, myTHSensor.AM2302);
 
     timeClient.begin();
+long lastReconnectAttempt = 0;
 
     long currentMillis = 0;
     int newSensorReading;
     int mode = CONTROL;
     while (true)
     {
-        //! MQTT pubsub bit
+
+        // if (!MQTTclient.connected())
+        // {
+        //     reconnect();
+        // }
+        // MQTTclient.loop();
+
         if (!MQTTclient.connected())
         {
-            reconnect();
+            long now = millis();
+            if (now - lastReconnectAttempt > 5000)
+            {
+                lastReconnectAttempt = now;
+                // Attempt to reconnect
+                if (MQTTreconnect())
+                {
+                    lastReconnectAttempt = 0;
+                }
+            }
         }
-        MQTTclient.loop();
+        else
+        {
+            // Client connected
+
+            MQTTclient.loop();
+        }
 
         if (mode == CONTROL)
         {
@@ -265,32 +296,20 @@ extern "C" int app_main(void)
             currentMillis = millis();
 
             newSensorReading = getAllSensorReadings();
-            //REad all sensors and states
-            // if (IOChanged)
-            // {
+
             if (myLight.hasNewState())
             {
                 MQTTclient.publish("Zone2/LightStatus", myLight.readState() ? "1" : "0");
-                // Serial.print("TX MQTT lightState: ");
-                // Serial.println((myLight.readState() ? "1" : "0"));
 
                 sprintf(msg, "%d", myLight.getLightSensor());
                 MQTTclient.publish("Zone2/LightSensor", msg);
-                // Serial.print("TX MQTT lightLevel: ");
-                // Serial.println(myLight.getLightSensor());
             }
 
             if (myTHSensor.hasNewTemperature())
             {
-                // Serial.print("New Temp: ");
-                // Serial.println(myTHSensor.readTemperature());
-                //sprintf(msg, "%f", myTHSensor.getTemperature());
                 dtostrf(myTHSensor.readTemperature(), 4, 1, msg);
                 MQTTclient.publish("Zone2/TemperatureStatus", msg);
 
-                //Serial.print("....Humi: ");
-                //Serial.println(myTHSensor.getHumidity()); //delay(5000);
-                //sprintf(msg, "%f", myTHSensor.getHumidity());
                 dtostrf(myTHSensor.getHumidity(), 4, 1, msg);
                 MQTTclient.publish("Zone2/HumidityStatus", msg);
             }
@@ -307,9 +326,8 @@ extern "C" int app_main(void)
 
                 //myDisplay.writeLine(6, TITLE_LINE6);
                 myDisplay.refresh();
-                //SnewSensorReading=false;
             }
-  
+
             //modify ops if 1 or more has changed its op
             bool OPsChanged = processOPs();
             if (OPsChanged || newSensorReading)

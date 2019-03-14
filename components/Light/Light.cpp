@@ -7,10 +7,6 @@ Light::Light(uint8_t ADC_Pin) : pin(ADC_Pin)
     newStateFlag = true;
 }
 
-// bool Light::getState()
-// {
-
-// }
 
 bool Light::sampleState()
 {
@@ -24,9 +20,6 @@ bool Light::sampleState()
     {
         state = currentState;
         newStateFlag = true;
-
-        // Serial.print("NEW sample lightState: ");
-        // Serial.println(state);
     }
     return state;
 }
