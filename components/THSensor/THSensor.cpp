@@ -14,7 +14,7 @@ float THSensor::getTemperature()
     newTemperature = DHT::getTemperature();
     if (isnan(newTemperature))
     {
-        Serial.println("-NAN-");
+        Serial.println("TEMP-NAN-");
         return temperature;
     }
     //if its a fresh - diff value from old then flag hasnewstate
@@ -54,7 +54,7 @@ float THSensor::getHumidity()
     newHumidity = DHT::getHumidity();
     if (isnan(newHumidity))
     {
-        Serial.println("-NAN-");
+        Serial.println("HUMI-NAN-");
         return humidity;
     }
     //if its a fresh - diff value from old then flag hasnewstate

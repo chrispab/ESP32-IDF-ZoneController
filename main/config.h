@@ -3,8 +3,8 @@
 
 #define SENSOR_READ_PERIOD_MS 500
 
-#define TSP_LON 22.5
-#define TSP_LOFF 15.0
+#define TSP_LON 24.0
+#define TSP_LOFF 22.0
 
 #define FAN_ON_MILLIS 17000
 #define FAN_OFF_MILLIS 30000

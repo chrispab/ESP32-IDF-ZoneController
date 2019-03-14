@@ -310,7 +310,7 @@ long lastReconnectAttempt = 0;
                 dtostrf(myTHSensor.readTemperature(), 4, 1, msg);
                 MQTTclient.publish("Zone2/TemperatureStatus", msg);
 
-                dtostrf(myTHSensor.getHumidity(), 4, 1, msg);
+                dtostrf(myTHSensor.readHumidity(), 4, 1, msg);
                 MQTTclient.publish("Zone2/HumidityStatus", msg);
             }
             if (true)
