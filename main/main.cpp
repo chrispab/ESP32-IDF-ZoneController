@@ -146,6 +146,17 @@ void reconnect()
         }
     }
 }
+void insertVTaskDelay()
+{
+    static long lastVTaskDelay = -5000;
+    long VTaskNnow = millis();
+
+    if (VTaskNnow - lastVTaskDelay > 10)
+    {
+        vTaskDelay(10);
+        lastVTaskDelay = VTaskNnow;
+    }
+}
 
 bool getAllSensorReadings()
 {
@@ -154,7 +165,7 @@ bool getAllSensorReadings()
 
     if (THnow - lastRead > SENSOR_READ_PERIOD_MS)
     {
-        vTaskDelay(1);
+        //vTaskDelay(30);
         lastRead = THnow;
         //fresh read all sensors
         myLight.sampleState();       //initiate light level sample aquisition and state update
@@ -174,10 +185,10 @@ bool getAllSensorReadings()
 
 bool processOPs()
 {
-    static bool lastHeaterState = false;
-    static bool lastVentState = false;
-    static bool lastFanState = false;
-    static bool lastVentSpeedState = false;
+    //static bool lastHeaterState = false;
+    //static bool lastVentState = false;
+    //static bool lastFanState = false;
+    //static bool lastVentSpeedState = false;
 
     long currentMillis = millis();
     float targetTemp;
@@ -218,9 +229,9 @@ extern "C" int app_main(void)
 {
     initArduino(); //required by esp-idf
 
-    float temperature = 0;
-    float humidity = 0;
-    bool lightState = false;
+    //float temperature = 0;
+    //float humidity = 0;
+    //bool lightState = false;
     char lineBuf[30];
     char readingStr[6];
 
@@ -233,6 +244,7 @@ extern "C" int app_main(void)
     {
         delay(500);
         Serial.print(".");
+        Serial.println("! WiFi connected at STARTUP !.");
     }
     //WiFi.mode(WIFI_STA);
     displayInit();
@@ -253,13 +265,28 @@ extern "C" int app_main(void)
     myTHSensor.setup(DHTPIN, myTHSensor.AM2302);
 
     timeClient.begin();
-long lastReconnectAttempt = 0;
+    long lastReconnectAttempt = 0;
 
     long currentMillis = 0;
     int newSensorReading;
     int mode = CONTROL;
     while (true)
     {
+        insertVTaskDelay();
+
+        if (WiFi.status() != WL_CONNECTED)
+        {
+            Serial.print("!!! WiFi Disconnected !!!");
+
+            Serial.print("Connecting to ");
+            Serial.print(MYSSID);
+            Serial.println("...");
+            WiFi.begin(MYSSID, MYWIFIPASSWORD);
+
+            // if (WiFi.waitForConnectResult() != WL_CONNECTED)
+            //     return;
+            Serial.println("WiFi connected");
+        }
 
         // if (!MQTTclient.connected())
         // {
