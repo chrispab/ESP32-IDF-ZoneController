@@ -225,6 +225,64 @@ boolean MQTTreconnect()
     }
     return MQTTclient.connected();
 }
+void updateDisplayClock()
+{
+    long currentMillis;
+    currentMillis = millis();
+    int newSecs;
+    static int oldSecs = 0;
+
+    newSecs = timeClient.getSeconds();
+    if (newSecs != oldSecs)
+    {
+        oldSecs = newSecs;
+        timeClient.update();
+
+        strcpy(msg, timeClient.getFormattedTime().c_str());
+        myDisplay.writeLine(5, msg);
+        //myDisplay.writeLine(5, msg);
+        myDisplay.refresh();
+        Serial.println(msg);
+    }
+
+    //do 1/4 sec update
+
+    static int oldStep = 0;
+    int totalSteps;
+    int step;
+    int sequence[] = {0x2190, 0x2191, 0x2192, 0x2193};
+    //get the last 1000ms - 0 to 999 result
+    int last1000ths = millis() % 1000;
+    if (last1000ths >= 0 && last1000ths < 250)
+    {
+        step = 1;
+    }
+    if (last1000ths >= 250 && last1000ths < 500)
+    {
+        step = 2;
+    }
+    if (last1000ths >= 500 && last1000ths < 750)
+    {
+        step = 3;
+    }
+    if (last1000ths >= 750 && last1000ths < 1000)
+    {
+        step = 4;
+    }
+    if (oldStep != step)
+    {
+        oldStep = step;
+        //Serial.println(timeClient.getFormattedTime());
+        sprintf(msg, "%u", step);
+        //Serial.println(msg);
+        //myDisplay.writeLine(4, sequence[step-1]);
+        myDisplay.writeLine(4, msg);
+        // myDisplay.drawGlyph(5, 20, 0x2603); /* dec 9731/hex 2603 Snowman */
+        // delay(1000);
+        myDisplay.refresh();
+    }
+}
+
 extern "C" int app_main(void)
 {
     initArduino(); //required by esp-idf
@@ -235,8 +293,8 @@ extern "C" int app_main(void)
     char lineBuf[30];
     char readingStr[6];
 
-    int newSecs = 1;
-    int oldSecs = 0;
+    //int newSecs = 1;
+    //int oldSecs = 0;
     //initESPSys();
     WiFi.begin(MYSSID, MYWIFIPASSWORD);
 
@@ -396,23 +454,7 @@ extern "C" int app_main(void)
 
             //update display clock
 
-            newSecs = timeClient.getSeconds();
-            if (newSecs != oldSecs)
-            {
-                oldSecs = newSecs;
-                timeClient.update();
-
-                //Serial.println(timeClient.getFormattedTime());
-                sprintf(msg, "%u", uint16_t(currentMillis / 1000));
-                //Serial.println(msg);
-
-                myDisplay.writeLine(4, msg);
-                strcpy(msg, timeClient.getFormattedTime().c_str());
-                myDisplay.writeLine(5, msg);
-                //myDisplay.writeLine(5, msg);
-                myDisplay.refresh();
-                Serial.println(msg);
-            }
+            updateDisplayClock();
         }
         if (mode == TEST)
         {
